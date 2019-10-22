@@ -1,5 +1,6 @@
 html {
     background-color: #250029;
+    font-family: sans-serif;
 }
 body {
     margin: 0;
@@ -7,10 +8,21 @@ body {
 
 #header {
     width: 100%;
-    height: 80px;
+    height: 90px;
     margin: 0px;
     background-color: red;
     position: relative;
+    color: white;
+    font-size: 70px;
+}
+
+#logo {
+    margin: 5px 10px;
+    float: left;
+}
+
+#title {
+    vertical-align: middle;
 }
 
 /*
