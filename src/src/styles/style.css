@@ -1,5 +1,5 @@
 html {
-    background-color: #250029;
+    background-color: #00313F;
     font-family: sans-serif;
 }
 body {
@@ -10,13 +10,15 @@ body {
     width: 100%;
     height: 90px;
     margin: 0px;
-    background-color: red;
+    background-color: #115163;
     position: relative;
     color: white;
     font-size: 70px;
 }
 
 #logo {
+    width: 121px;
+    height: 80px;
     margin: 5px 10px;
     float: left;
 }
@@ -25,6 +27,10 @@ body {
     vertical-align: middle;
 }
 
+hr {
+    margin: 0;
+    padding: 0;
+}
 /*
 .button {
     text-decoration: none;
