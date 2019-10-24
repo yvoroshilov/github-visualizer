@@ -2,7 +2,7 @@ html {
     height: 100%;
     background-color: #00313F;
     font-family: sans-serif;
-    color: white;
+    color: whitesmoke;
     //overflow: hidden;
 }
 body {
@@ -17,12 +17,22 @@ hr {
     padding: 0;
 }
 
+a {
+    color: #00c7ec;
+}
+
+a:hover {
+    color: white;
+}
+
 input {
     color: #00c7ec;
     border: 1px solid #00c7ec;
     border-radius: 5px;
     width: 122px;
     padding-left: 5px;
+    outline: none;
+    background-color: whitesmoke;
 
 }
 
@@ -52,16 +62,26 @@ input {
 
 #visualizingField {
     flex: 1;
+    padding: 5px 5px 0;
     //background-color: green;
 }
 
 #statsBox {
     flex: 0 1 70px;
+    display: flex;
+    flex-flow: row wrap;
     //background-color: red;
 }
 
 #stats {
+    margin: 5px 0;
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
 
+#stats td {
+    padding: 5px 3px 5px 3px;
+    //border: 1px solid white;
 }
 
 #footer {
@@ -103,6 +123,7 @@ input {
 
 }
 #button:hover {
+    color: white;
     box-shadow: 0 0 10px 0 #24B5DA;
     background-color: #00c7ec;
 }
