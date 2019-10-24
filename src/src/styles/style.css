@@ -1,5 +1,5 @@
 html {
-    background-color: #00313F;
+    background-color: green;
     font-family: sans-serif;
 }
 body {
@@ -8,17 +8,23 @@ body {
 
 #header {
     width: 100%;
-    height: 90px;
+    height: 55px;
     margin: 0px;
     background-color: #115163;
     position: relative;
     color: white;
-    font-size: 70px;
+    font-size: 39.375px;
+}
+
+#logoAndTitle {
+    display: inline-block;
+    margin-left: 50%;
+    transform: translateX(-50%);
 }
 
 #logo {
-    width: 121px;
-    height: 80px;
+    width: 68.0625px;
+    height: 45px;
     margin: 5px 10px;
     float: left;
 }
@@ -31,6 +37,27 @@ hr {
     margin: 0;
     padding: 0;
 }
+
+#visualizeField {
+    height: 559px;
+}
+
+#stats {
+    width: 100%;
+    height: 70px;
+    background-color: red;
+}
+
+input {
+
+}
+
+#footer {
+    height: 35px;
+    background-color: red;
+    text-align: center;
+}
+
 /*
 .button {
     text-decoration: none;
