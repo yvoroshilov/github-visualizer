@@ -1,8 +1,9 @@
 html {
+    height: 100%;
     background-color: #00313F;
     font-family: sans-serif;
+    color: white;
     //overflow: hidden;
-    height: 100%;
 }
 body {
     height: 100%;
@@ -17,6 +18,11 @@ hr {
 }
 
 input {
+    color: #00c7ec;
+    border: 1px solid #00c7ec;
+    border-radius: 5px;
+    width: 122px;
+    padding-left: 5px;
 
 }
 
@@ -24,7 +30,6 @@ input {
     flex: 0 1 55px;
     margin: 0px;
     background-color: #115163;
-    color: white;
     font-size: 39px;
 }
 
@@ -50,11 +55,14 @@ input {
     //background-color: green;
 }
 
-#stats {
+#statsBox {
     flex: 0 1 70px;
     //background-color: red;
 }
 
+#stats {
+
+}
 
 #footer {
     /*
@@ -68,33 +76,41 @@ input {
     text-align: center;
 }
 
-/*
-.button {
-    text-decoration: none;
-    text-transform: uppercase;
-    font-family: "Exo 2", sans-serif;
-    font-weight: 300;
-    font-size: 30px;
+#inpRepo {
+    margin-bottom: 5px;
+    margin-top: 5px;
+
+}
+
+#form {
     display: inline-block;
-    position: relative;
+    margin: 0 30px;
+}
+
+#button {
+    display: table-cell;
+    height: 25px;
+    width: 120px;
+    text-decoration: none;
+    font-size: 16px;
     text-align: center;
+    vertical-align: middle;
     color: #00c7ec;
     border: 1px solid #00c7ec;
     border-radius: 5px;
-    line-height: 3em;
-    padding-left: 5em;
-    padding-right: 5em;
+    padding: 3px;
     box-shadow: 0 0 0 0 transparent;
+
 }
-.button:hover {
-    color: white;
-    box-shadow: 0 0 30px 0 rgba(0, 199, 236, 0.5);
+#button:hover {
+    box-shadow: 0 0 10px 0 #24B5DA;
     background-color: #00c7ec;
 }
-.button:active {
+#button:active {
     box-shadow: 0 0 0 0 transparent;
 }
-.button:before {
+/*
+#button:before {
     content: "";
     display: block;
     width: 0px;
@@ -107,17 +123,4 @@ input {
     box-shadow: 0 0 15px 3px white;
 }
 
-/*@include keyframes(shine) {
-  from {
-    opacity: 0;
-    left: 0%;
-  }
-
-  50% {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    left: 100%;
-  }
-}*/
+ */
