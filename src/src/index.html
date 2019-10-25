@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicons/favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
-    <title>GitHub visualizer</title>
+    <title>GitHub Visualizer</title>
 </head>
 <body>
     <div id="header">
@@ -19,33 +19,30 @@
     <hr />
     <div id="statsBox">
         <div id="form">
-            <input type="url" id="inpRepo">
-            <a href="#" id="button">Visualize!</a>
+            <input id="inpRepo" type="url">
+            <a id="btnRepo" href="#">Visualize!</a>
         </div>
         <table id="stats">
             <tbody>
                 <tr>
-                    <td>URL: <a href="#">test</a></td>
-                    <td>Last commit: </td>
+                    <td>Link: <span></span></td>
+                    <td>Number of commits: <span></span></td>
                 </tr>
                 <tr>
-                    <td>Number of commits: </td>
-                    <td></td>
+                    <td>Date created: <span></span></td>
+                    <td>Last commit: <span></span></td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <hr />
+    <!--<hr style="border-color: black"/>-->
     <div id="visualizingField">
-        aaaaaaaaaaaaaaaaaaaaaaa
     </div>
-
     <div id="footer">
         Yaroslav Voroshilov <br/>
         2019
     </div>
-    <script>
+    <script src="scripts/script.js">
     </script>
-
 </body>
 </html>
