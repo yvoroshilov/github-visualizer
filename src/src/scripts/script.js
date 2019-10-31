@@ -1,9 +1,21 @@
 const btnRepo = document.getElementById("btnRepo");
-btnRepo.addEventListener("click", visualize);
+btnRepo.addEventListener("click", fetchSmth);
 
 const REPOURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}";
 const COMMITSURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}/commits{/sha}";
+let OPTIONS = {
+        method: "GET",
+        headers: {
+        Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
+    }
+};
 
+async function fetchSmth () {
+    //be7095a2838af941e665a27f1b34242f6b60e816
+    const URL = "https://api.github.com/";
+    const info = await fetch(URL + "rate_limit", OPTIONS);
+    console.log(await info.json());
+}
 async function visualize () {
     const usrAndRepo = await processUrl();
     /*
@@ -11,7 +23,8 @@ async function visualize () {
     const response = await fetch(GHApiUrl);
     const result = await response.json();
     console.log(result);
-*/
+    debugger;
+    */
     let repoUrl;
     repoUrl = REPOURLTEMPLATE.replace("{owner}", usrAndRepo.username);
     repoUrl = repoUrl.replace("{repo}", usrAndRepo.repoName);
