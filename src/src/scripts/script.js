@@ -1,20 +1,19 @@
 const btnRepo = document.getElementById("btnRepo");
-btnRepo.addEventListener("click", fetchSmth);
+btnRepo.addEventListener("click", visualize);
 
-const REPOURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}";
-const COMMITSURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}/commits{/sha}";
-let OPTIONS = {
+const OPTIONS = {
         method: "GET",
         headers: {
-        Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
+            Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
     }
 };
+const COMMITSPERPAGE = 100;
+const REPOURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}";
+const COMMITSURLTEMPLATE = "https://api.github.com/repos/{owner}/{repo}/commits{/sha}";
+fetch("https://api.github.com/rate_limit", OPTIONS).then(result => (result.json()).then(result => (console.log(result.rate))));
+
 
 async function fetchSmth () {
-    //be7095a2838af941e665a27f1b34242f6b60e816
-    const URL = "https://api.github.com/";
-    const info = await fetch(URL + "rate_limit", OPTIONS);
-    console.log(await info.json());
 }
 async function visualize () {
     const usrAndRepo = await processUrl();
@@ -28,17 +27,76 @@ async function visualize () {
     let repoUrl;
     repoUrl = REPOURLTEMPLATE.replace("{owner}", usrAndRepo.username);
     repoUrl = repoUrl.replace("{repo}", usrAndRepo.repoName);
-    const repoInfo = await (await fetch(repoUrl)).json();
+    const repoInfo = await (await fetch(repoUrl, OPTIONS)).json();
 
 
     let commitsInfo, commitsUrl;
-    commitsUrl = COMMITSURLTEMPLATE.replace("{/sha}", "?per_page=100&page=1");
+    commitsUrl = COMMITSURLTEMPLATE.replace("{/sha}", `?per_page=${COMMITSPERPAGE}`);
     commitsUrl = commitsUrl.replace("{repo}", usrAndRepo.repoName);
     commitsUrl = commitsUrl.replace("{owner}", usrAndRepo.username);
-    commitsInfo = await (await fetch(commitsUrl)).json();
+    commitsInfo = await fetch(commitsUrl, OPTIONS);
+    const commitsPaginator = {
+        // Raw response from commits url
+        commitsInfo: commitsInfo,
+        pageNumber: 0,
+        links: {
+            next: "",
+            prev: "",
+            first: "",
+            last: ""
+        },
+
+        getNewLinks: function () {
+            let links = (commitsInfo.headers.get("Link"));
+            if (!links) return;
+            links = links.split(",");
+            const pageUrls = links.map(a => {
+                return {
+                    title: a.split(";")[1],
+                    url: a.split(";")[0]
+                }
+            });
+            pageUrls.forEach(a => {
+                a.url = a.url.replace("<", "").replace(">", "").replace(" ", "");
+                a.title = a.title.slice(a.title.indexOf("\"") + 1, a.title.lastIndexOf("\""));
+            });
+            for (let link of pageUrls) {
+                this.links[link.title] = link.url;
+            }
+        },
+        next: async function () {
+            if (this.links.next === "") throw new Error("next link does not exist!");
+
+            this.pageNumber++;
+            this.commitsInfo = await fetch(this.links.next, OPTIONS);
+            this.getNewLinks();
+        },
+        prev: async function () {
+            if (this.links.prev === "") throw new Error("prev link does not exist!");
+
+            this.pageNumber--;
+            this.commitsInfo = await fetch(this.links.prev, OPTIONS);
+            this.getNewLinks();
+        },
+        first: async function () {
+            if (this.links.first === "") throw new Error("first link does not exist!");
+
+            this.pageNumber = 1;
+            this.commitsInfo = await fetch(this.links.first, OPTIONS);
+            this.getNewLinks();
+
+        },
+        last: async function () {
+            if (this.links.last === "") throw new Error("last link does not exist!");
+
+            this.pageNumber = Number.parseInt((this.links.last.slice(this.links.last.lastIndexOf("=") + 1)));
+            this.commitsInfo = await fetch(this.links.last, OPTIONS);
+            this.getNewLinks();
+        }
+    };
+    commitsPaginator.getNewLinks();
     console.log(commitsInfo);
-    await setStats(commitsInfo, repoInfo, commitsUrl);
-    console.log(commitsUrl);
+    await setStats(commitsPaginator, repoInfo, commitsUrl);
 }
 
 async function processUrl () {
@@ -52,28 +110,33 @@ async function processUrl () {
     return decomposedUrl;
 }
 
-async function setStats (commitsInfo, repoInfo, commitsUrl) {
+async function setStats (commitsPaginator, repoInfo) {
     const cells = document.getElementById("stats").getElementsByTagName("span");
+    let curComPage = await commitsPaginator.commitsInfo.json();
 
-    const repoHtmlUrl = commitsInfo[0].html_url.slice(0,(commitsInfo[0].html_url.indexOf("/commit")));
+    // Setting a reference to repo
+    const repoHtmlUrl = curComPage[0].html_url.slice(0,(curComPage[0].html_url.indexOf("/commit")));
     cells[0].appendChild(document.createElement("a"));
     cells[0].lastElementChild.setAttribute("href", repoHtmlUrl);
     cells[0].lastElementChild.appendChild(document.createTextNode(repoHtmlUrl.replace("https://", "")));
 
-    let firstCommit = commitsInfo[commitsInfo.length-1];
-    let lastCommit = commitsInfo[0];
-    let numberOfCommits = commitsInfo.length;
-    let page = 1;
-    while (firstCommit.parents.length != 0) {
-        commitsUrl = commitsUrl.slice(0, commitsUrl.lastIndexOf("=") + 1) + ++page;
-        commitsInfo = await (await fetch(commitsUrl)).json();
-        numberOfCommits += commitsInfo.length;
-        firstCommit = commitsInfo[commitsInfo.length-1];
+    // Getting all commits and specifying commits number
+    //TODO Make datalist with branches!!!
+    let lastCommit = curComPage[0];
+    let numberOfCommits = curComPage.length;
+    if (commitsPaginator.links.last !== "") {
+        await commitsPaginator.last();
+        curComPage = await commitsPaginator.commitsInfo.json();
+        numberOfCommits += (commitsPaginator.pageNumber - 2) * COMMITSPERPAGE + curComPage.length;
     }
+    debugger;
+
     cells[1].appendChild(document.createTextNode(numberOfCommits));
 
+    // Repository creating date
     cells[2].appendChild(document.createTextNode(repoInfo.created_at));
 
+    // Last commit info
     cells[3].appendChild(document.createTextNode(
         lastCommit.sha.slice(0, 7) + " | " +
         lastCommit.commit.committer.date
