@@ -18,19 +18,25 @@
     </div>
     <hr />
     <div id="statsBox">
-        <div id="form">
-            <input id="inpRepo" type="url">
-            <a id="btnRepo" href="#">Visualize!</a>
+        <div id="inputBox">
+            <input id="inpRepo" type="url" placeholder="https://github.com/...">
+            <a class="btn" id="btnRepo" href="#">Fetch data</a>
         </div>
         <table id="stats">
             <tbody>
                 <tr>
                     <td>Link: <span></span></td>
+                    <td style="border-right: 1px solid dimgrey; border-left: 1px solid dimgrey; text-align: center">Current branch</td>
                     <td>Number of commits: <span></span></td>
                 </tr>
                 <tr>
                     <td>Date created: <span></span></td>
-                    <td>Last commit: <span></span></td>
+                    <td style="border-right: 1px solid dimgrey; border-left: 1px solid dimgrey">
+                        <select id="branchSel" autocomplete="on">
+                            <option selected>No data loaded</option>
+                        </select>
+                    </td>
+                    <td>Latest commit: <span></span></td>
                 </tr>
             </tbody>
         </table>
@@ -42,7 +48,8 @@
         Yaroslav Voroshilov <br/>
         2019
     </div>
-    <script src="scripts/script.js"></script>
+    <script src="scripts/eventHandlers.js"></script>
+    <script src="scripts/dataCollector.js"></script>
     <script src="scripts/visualizer.js"></script>
 </body>
 </html>
