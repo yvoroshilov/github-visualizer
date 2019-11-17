@@ -4,37 +4,40 @@ const COMMITS_PER_PAGE = 100;
 const REPO_URL_TEMPLATE = "https://api.github.com/repos/*";
 const COMMITS_URL_TEMPLATE = "https://api.github.com/repos/*/commits";
 const OPTIONS = {
-        method: "GET",
-        headers: {
-            Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
+    method: "GET",
+    headers: {
+        Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
     }
 };
 fetch("https://api.github.com/rate_limit", OPTIONS).then(result => (result.json()).then(result => (console.log(result.rate))));
 // --------INITIAL DATA----------
+
 // --------COLLECTED DATA--------
 let branches;
 // --------COLLECTED DATA--------
 
-const paginator = {
+function Paginator (items) {
     // Raw response from api req
-    _items: null,
-    pageNumber: 0,
-    links: {
+    let _items = null;
+    this.pageNumber = 0;
+    this.links = {
         next: "",
         prev: "",
         first: "",
         last: ""
-    },
+    };
 
-    set items (items) {
-        this._items = items;
-        this.getNewLinks();
-    },
-    get items () {
-        return this._items;
-    },
-    getNewLinks: function () {
-        let links = (this._items.headers.get("Link"));
+    Object.defineProperty(this, "items", {
+        set: function () {
+            _items = items;
+            this.getNewLinks();
+        },
+        get: function () {
+            return _items;
+        }
+    });
+    this.getNewLinks = function () {
+        let links = (_items.headers.get("Link"));
         if (!links) return;
         links = links.split(",");
         const pageUrls = links.map(a => {
@@ -50,37 +53,39 @@ const paginator = {
         for (let link of pageUrls) {
             this.links[link.title] = link.url;
         }
-    },
-    next: async function () {
+    };
+    this.next = async function () {
         if (this.links.next === "") throw new Error("next link does not exist!");
 
         this.pageNumber++;
-        this._items = await fetch(this.links.next, OPTIONS);
+        _items = await fetch(this.links.next, OPTIONS);
         this.getNewLinks();
-    },
-    prev: async function () {
+    };
+    this.prev = async function () {
         if (this.links.prev === "") throw new Error("prev link does not exist!");
 
         this.pageNumber--;
-        this._items = await fetch(this.links.prev, OPTIONS);
+        _items = await fetch(this.links.prev, OPTIONS);
         this.getNewLinks();
-    },
-    first: async function () {
+    };
+    this.first = async function () {
         if (this.links.first === "") throw new Error("first link does not exist!");
 
         this.pageNumber = 1;
-        this._items = await fetch(this.links.first, OPTIONS);
+        _items = await fetch(this.links.first, OPTIONS);
         this.getNewLinks();
 
-    },
-    last: async function () {
+    };
+    this.last = async function () {
         if (this.links.last === "") throw new Error("last link does not exist!");
 
         this.pageNumber = Number.parseInt((this.links.last.slice(this.links.last.lastIndexOf("=") + 1)));
-        this._items = await fetch(this.links.last, OPTIONS);
+        _items = await fetch(this.links.last, OPTIONS);
         this.getNewLinks();
-    }
-};
+    };
+
+    this.items = items;
+}
 
 async function fetchSmth () {
     /*
@@ -91,7 +96,7 @@ console.log(result);
 debugger;
 */
 }
-async function startPoint (decomposedInput) {
+async function startFetching (decomposedInput) {
     const usrAndRepo = decomposedInput;
 
     // Getting repository data
@@ -105,7 +110,7 @@ async function startPoint (decomposedInput) {
     commitsUrl = commitsUrl.replace("*", `${usrAndRepo.username}/${usrAndRepo.repoName}`);
     commitsInfo = await fetch(commitsUrl, OPTIONS);
 
-    setRepoStats(repoInfo);
+    await setRepoStats(repoInfo);
 }
 
 
@@ -129,23 +134,25 @@ async function setRepoStats (repoInfo) {
         const curElem = branchSelector.appendChild(document.createElement("option"));
         curElem.setAttribute("value", i.toString());
         curElem.innerHTML = branches[i].name;
+        branches[i] = {
+            name: branches[i].name,
+            data: await fetch(branches[i].commit.url.slice(0, branches[i].commit.url.lastIndexOf("/")) +
+                  `?per_page=${COMMITS_PER_PAGE}&sha=` +
+                  branches[i].commit.url.slice(branches[i].commit.url.lastIndexOf("/") + 1),
+                  OPTIONS)
+        };
         if (branches[i].name === repoInfo.default_branch) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
         }
+
     }
     setBranchStats(defaultBranch);
 }
 
 async function setBranchStats (branch) {
-    // should I sperate variables or put url constructing statment directly to fetch???????
-    let curComPage = (
-        branch.commit.url.slice(0, branch.commit.url.lastIndexOf("/")) +
-        `?per_page=${COMMITS_PER_PAGE}&sha=` +
-        branch.commit.url.slice(branch.commit.url.lastIndexOf("/") + 1)
-    );
-    paginator.items = await fetch(curComPage, OPTIONS);
-    curComPage = await paginator.items.json();
+    const paginator = new Paginator(branch.data);
+    let curComPage = await paginator.items.json();
     let latestCommit = curComPage[0];
     let numberOfCommits = curComPage.length;
     if (paginator.links.last !== "") {
