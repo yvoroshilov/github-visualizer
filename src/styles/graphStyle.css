@@ -1,0 +1,18 @@
+svg {
+
+}
+
+line {
+    stroke-width: 55;
+    stroke: red;
+}
+
+path {
+    stroke-width: 2;
+    stroke: green;
+    fill: transparent;
+}
+
+circle {
+    fill: orange;
+}
