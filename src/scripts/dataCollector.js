@@ -14,6 +14,7 @@ fetch("https://api.github.com/rate_limit", OPTIONS).then(result => (result.json(
 
 // --------COLLECTED DATA--------
 let branches;
+let maxCommits = 0;
 // --------COLLECTED DATA--------
 
 function Paginator (items) {
@@ -144,6 +145,7 @@ async function setRepoStats (repoInfo) {
         if (branches[i].name === repoInfo.default_branch) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
+            branches.defaultBranchName = branches[i].name;
         }
 
     }
@@ -152,7 +154,7 @@ async function setRepoStats (repoInfo) {
 
 async function setBranchStats (branch) {
     const paginator = new Paginator(branch.data);
-    let curComPage = await paginator.items.json();
+    let curComPage = await paginator.items.clone().json();
     let latestCommit = curComPage[0];
     let numberOfCommits = curComPage.length;
     if (paginator.links.last !== "") {
@@ -163,6 +165,8 @@ async function setBranchStats (branch) {
     const cells = document.getElementById("stats").getElementsByTagName("span");
 
     cells[1].appendChild(document.createTextNode(numberOfCommits));
+    branch.totalCommits = numberOfCommits;
+    maxCommits = Math.max(maxCommits, branch.totalCommits);
 
     // Last commit info
     cells[3].appendChild(document.createTextNode(

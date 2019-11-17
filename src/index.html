@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="styles/style.css" type="text/css">
+    <link rel="stylesheet" href="styles/pageStyle.css" type="text/css">
+    <link rel="stylesheet" href="styles/graphStyle.css" type="text/css">
     <link rel="apple-touch-icon" sizes="180x180" href="images/favicons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicons/favicon-16x16.png">
@@ -42,14 +43,28 @@
         </table>
     </div>
     <!--<hr style="border-color: black"/>-->
-    <div id="visualizingField">
+    <div id="visualizingBox">
+        <div id="visualizingField">
+            <svg height="100%" width="100%">
+                <circle cx="480" cy="104" r="80"></circle>
+                <circle cx="80" cy="320" r="30"></circle>
+                <circle cx="80" cy="450" r="30" fill="red"></circle>
+                <line x1="150" y1="450" x2="480" y2="450"></line>
+                <circle cx="480" cy="450" r="80" fill="red"></circle>
+
+            </svg>
+        </div>
     </div>
     <div id="footer">
         Yaroslav Voroshilov <br/>
         2019
     </div>
+    <script src="https://d3js.org/d3.v5.js"></script>
     <script src="scripts/eventHandlers.js"></script>
     <script src="scripts/dataCollector.js"></script>
     <script src="scripts/visualizer.js"></script>
+    <script>
+
+    </script>
 </body>
 </html>
