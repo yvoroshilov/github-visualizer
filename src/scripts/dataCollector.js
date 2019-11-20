@@ -9,12 +9,20 @@ const OPTIONS = {
         Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
     }
 };
-fetch("https://api.github.com/rate_limit", OPTIONS).then(result => (result.json()).then(result => (console.log(result.rate))));
+fetch("https://api.github.com/rate_limit", OPTIONS)
+    .then(result => (result.json())
+    .then(result => {
+        result.rate.reset = (new Date(result.rate.reset * 1000)).toString();
+        console.log(result.rate);
+    }));
 // --------INITIAL DATA----------
 
 // --------COLLECTED DATA--------
-let branches;
+// commits array consists of commitTemplate
+let commits;
 let maxCommits = 0;
+let branches;
+let defaultBranch;
 // --------COLLECTED DATA--------
 
 function Paginator (items) {
@@ -31,6 +39,13 @@ function Paginator (items) {
     Object.defineProperty(this, "items", {
         set: function () {
             _items = items;
+            this.pageNumber = 1;
+            this.links = {
+                next: "",
+                prev: "",
+                first: "",
+                last: ""
+            };
             this.getNewLinks();
         },
         get: function () {
@@ -130,22 +145,21 @@ async function setRepoStats (repoInfo) {
     const branchesUrl = REPO_URL_TEMPLATE.replace("*", repoInfo.full_name) + "/branches?per_page=100";
     branches = await (await fetch(branchesUrl, OPTIONS)).json();
     const branchSelector = document.getElementById("branchSel");
-    let defaultBranch;
     for (let i = 0; i < branches.length; i++) {
         const curElem = branchSelector.appendChild(document.createElement("option"));
         curElem.setAttribute("value", i.toString());
         curElem.innerHTML = branches[i].name;
         branches[i] = {
             name: branches[i].name,
-            data: await fetch(branches[i].commit.url.slice(0, branches[i].commit.url.lastIndexOf("/")) +
-                  `?per_page=${COMMITS_PER_PAGE}&sha=` +
-                  branches[i].commit.url.slice(branches[i].commit.url.lastIndexOf("/") + 1),
-                  OPTIONS)
+            data: await fetch(
+                branches[i].commit.url
+                    .replace("commits/", `commits?per_page=${COMMITS_PER_PAGE}&sha=`),
+                OPTIONS
+            )
         };
         if (branches[i].name === repoInfo.default_branch) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
-            branches.defaultBranchName = branches[i].name;
         }
 
     }
@@ -159,8 +173,8 @@ async function setBranchStats (branch) {
     let numberOfCommits = curComPage.length;
     if (paginator.links.last !== "") {
         await paginator.last();
-        curComPage = await paginator.items.json();
-        numberOfCommits += (paginator.pageNumber - 2) * COMMITS_PER_PAGE + curComPage.length;
+        curComPage = await paginator.items.clone().json();
+        numberOfCommits = (paginator.pageNumber - 1) * COMMITS_PER_PAGE + curComPage.length;
     }
     const cells = document.getElementById("stats").getElementsByTagName("span");
 
