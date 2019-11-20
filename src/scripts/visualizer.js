@@ -77,8 +77,8 @@ function getEdge(start, end) {
 }
 const MAX_NODES = 30;
 const MAX_BRANCHES = 10;
-const BASE_WIDTH = 1532;
-const BASE_HEIGHT = 566.4;
+const BASE_WIDTH = svgSize.width;
+const BASE_HEIGHT = svgSize.height;
 const BASE_RADIUS_MAX = 80;
 const BASE_RADIUS_MIN = 30;
 const BASE_DISTANCE_HORIZONTAL_MAX = 330;
@@ -86,14 +86,18 @@ const BASE_DISTANCE_VERTICAL_MIN = 130;
 
 function visualize () {
     const RADIUS = 30;
-    const DISTANCE_HORIZONTAL = RADIUS * BASE_DISTANCE_HORIZONTAL_MAX / BASE_RADIUS_MAX;
-    const DISTANCE_VERTICAL = RADIUS * BASE_DISTANCE_VERTICAL_MIN / BASE_RADIUS_MIN;
+    const DISTANCE_HORIZONTAL = 123.75;
+    const DISTANCE_VERTICAL = 130;
     // with no padding accounting
-    const WIDTH = (RADIUS * 2 + (DISTANCE_HORIZONTAL - RADIUS * 2)) * maxCommits;
-    const PADDING_VERTICAL = d3.scaleLinear().domain([1, MAX_NODES]).range([WIDTH, 80]).clamp(false)(1);
+    const WIDTH = (RADIUS * 2 + (DISTANCE_HORIZONTAL - RADIUS * 2)) * maxCommits > svgSize.width ?
+        (RADIUS * 2 + (DISTANCE_HORIZONTAL - RADIUS * 2)) * maxCommits : svgSize.width;
+
+        
+    
     debugger;
     
     
     
     
 }
+d3
