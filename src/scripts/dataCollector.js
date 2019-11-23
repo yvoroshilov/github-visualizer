@@ -18,11 +18,11 @@ fetch("https://api.github.com/rate_limit", OPTIONS)
 // --------INITIAL DATA----------
 
 // --------COLLECTED DATA--------
-// commits array consists of commitTemplate
-let commits;
+let commitGraph;
 let maxCommits = 0;
 let branches;
 let defaultBranch;
+let usrAndRepo;
 // --------COLLECTED DATA--------
 
 function Paginator (items) {
@@ -113,7 +113,7 @@ debugger;
 */
 }
 async function startFetching (decomposedInput) {
-    const usrAndRepo = decomposedInput;
+    usrAndRepo = decomposedInput;
 
     // Getting repository data
     let repoUrl;
@@ -151,17 +151,14 @@ async function setRepoStats (repoInfo) {
         curElem.innerHTML = branches[i].name;
         branches[i] = {
             name: branches[i].name,
-            data: await fetch(
-                branches[i].commit.url
-                    .replace("commits/", `commits?per_page=${COMMITS_PER_PAGE}&sha=`),
-                OPTIONS
-            )
+            data: await fetchWithSha(branches[i].commit.sha)
         };
         if (branches[i].name === repoInfo.default_branch) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
+            branches.splice(i, 1);
+            branches.splice(0, 0, defaultBranch);
         }
-
     }
     setBranchStats(defaultBranch);
 }
@@ -187,4 +184,154 @@ async function setBranchStats (branch) {
         latestCommit.sha.slice(0, 7) + " | " +
         latestCommit.commit.committer.date
     ));
+}
+
+async function buildGraph () {
+    let initial = {
+        data: null,
+        descendants: [],
+        endOfMerged: false,
+        
+        has: function (sha) {
+            let found = false;
+            function hasRec (cur, sha) {
+                if (found) return;
+                if (cur.data.sha === sha) {
+                    found = true;
+                    return;
+                }
+                for (let i = 0; i < cur.descendants.length; i++) {
+                    hasRec(cur.descendants[i], sha);
+                }
+            }
+            hasRec(this, sha);
+            return found;
+        }
+    };
+    // constantly altering array
+    let notCompletlyMerged = [];
+
+    // !THIS FUNCTION PROCESSES COMMITS IN REVERSE
+    // ORDER COMPARING TO DEFAULT FETCH OUTPUT AND
+    // ALL COMMITS ARE "initial" OBJECT INSTANCES!
+    async function build () {
+        for (let brn = 0; brn < branches.length; brn++) {
+            let commitPool = await getAllCommits(new Paginator(branches[brn]));
+            commitPool.forEach(com => com = Object.create(initial).data = com);
+            if (brn === 0) initial = commitPool[commitPool.length];
+
+
+            // searching for the beginning of the branch
+            let mainBranch = commitPool[0];
+            let pos = 0;
+            let found = false;
+            while (!found) {
+                let mainParentN = 0;
+                if (mainBranch.parents.length === 2) {
+                    let branch1 = await fetchWithSha(mainBranch.parents[0].sha);
+                    let branch2 = await fetchWithSha(mainBranch.parents[1].sha);
+                    if (await distinguishMainMerged(new Paginator(branch1) !== branch1)) {
+                        mainParentN = 1;
+                    }
+                }
+                for (let j = pos + 1; j < commitPool.length; j++) {
+                    if (commitPool[j].sha === mainBranch.parents[mainParentN].sha) {
+                        if (initial.has(commitPool[j])) {
+                            found = true;
+                            await appendDescendant(initial, commitPool[j].sha, mainBranch);
+                            break;
+                        }
+                        commitPool[j].descendants.push(mainBranch);
+                        mainBranch = commitPool[j];
+                        pos = j;
+                    }
+                }
+            }
+            for (let cmtn = 0; cmtn < commitPool.length; cmtn++) {
+                // if main branch has
+            }
+        }
+    }
+
+    async function appendDescendant (cur, toSha, newDescendant) {
+        for (let i = 0; i < notCompletlyMerged.length; i++) {
+            let item = notCompletlyMerged[i];
+            if (item.sha === toSha) {
+                item.descendants.push(newDescendant);
+                if (item.descendants.length === 2) {
+                    if (await distinguishMainMerged(cur.descendants[0], cur.descendants[1])[0] !== cur.descendants[0]) {
+                        swap(cur.descendants[0], cur.descendants[1]);
+                    }
+                }
+                return;
+            }
+        }
+
+        let found = false;
+        async function appendDescendantRec (cur, toSha, newDescendant) {
+            if (found) return;
+            if (cur.sha === toSha) {
+                cur.descendants.push(newDescendant);
+                if (cur.descendants.length === 2) {
+                    if (await distinguishMainMerged(cur.descendants[0], cur.descendants[1])[0] !== cur.descendants[0]) {
+                        swap(cur.descendants[0], cur.descendants[1]);
+                    }
+                }
+                found = true;
+            }
+            for (let i = 0; i < cur.descendants.length; i++) {
+                await appendDescendantRec(cur.descendants[i], toSha, newDescendant);
+            }
+        }
+        await appendDescendantRec(cur, toSha, newDescendant);
+    }
+
+    async function distinguishMainMerged (paginator1, paginator2) {
+        if (await getTotalCommitsNumber(paginator1) > await getTotalCommitsNumber(paginator2)) {
+            swap(paginator1, paginator2);
+        }
+        // [main_branch, merged_branch]
+        return [paginator1, paginator2];
+    }
+
+    async function getAllCommits (paginator) {
+        let allCommits = [];
+        let curPage = await paginator.items.clone().json();
+        allCommits.push(curPage);
+        while (paginator.links.next !== "") {
+            await paginator.next();
+            curPage = await paginator.items.clone().json();
+            allCommits.push(curPage);
+        }
+        return allCommits;
+    }
+
+    async function getTotalCommitsNumber (paginator) {
+        if (paginator.links.last !== "") {
+            await paginator.last();
+            let lastPage = await paginator.items.clone().json();
+            return (paginator.pageNumber - 1) * COMMITS_PER_PAGE + lastPage.length;
+        } else {
+            let page = await paginator.items.clone().json();
+            return page.length;
+        }
+    }
+}
+
+
+/*
+    ***auxilary***
+*/
+
+function swap (a, b) {
+    a = [b, b = a][0];
+}
+
+async function fetchWithSha (sha) {
+    return await fetch(
+        COMMITS_URL_TEMPLATE
+        .replace("*", `${usrAndRepo.username}/${usrAndRepo.repoName}`)
+        .concat(`?per_page=${COMMITS_PER_PAGE}&sha=${sha}`),
+        OPTIONS
+    )
 }
