@@ -156,8 +156,6 @@ async function setRepoStats (repoInfo) {
         if (branches[i].name === repoInfo.default_branch) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
-            branches.splice(i, 1);
-            branches.splice(0, 0, defaultBranch);
         }
     }
     setBranchStats(defaultBranch);
@@ -187,112 +185,34 @@ async function setBranchStats (branch) {
 }
 
 async function buildGraph () {
-    let initial = {
-        data: null,
-        descendants: [],
-        endOfMerged: false,
-        
-        has: function (sha) {
-            let found = false;
-            function hasRec (cur, sha) {
-                if (found) return;
-                if (cur.data.sha === sha) {
-                    found = true;
-                    return;
-                }
-                for (let i = 0; i < cur.descendants.length; i++) {
-                    hasRec(cur.descendants[i], sha);
-                }
-            }
-            hasRec(this, sha);
-            return found;
-        }
-    };
-    // constantly altering array
-    let notCompletlyMerged = [];
 
-    // !THIS FUNCTION PROCESSES COMMITS IN REVERSE
-    // ORDER COMPARING TO DEFAULT FETCH OUTPUT AND
-    // ALL COMMITS ARE "initial" OBJECT INSTANCES!
-    async function build () {
-        for (let brn = 0; brn < branches.length; brn++) {
-            let commitPool = await getAllCommits(new Paginator(branches[brn]));
-            commitPool.forEach(com => com = Object.create(initial).data = com);
-            if (brn === 0) initial = commitPool[commitPool.length];
+    let mainArray = [await getFristCommit(new Paginator(branches[0].data))];
+    let allCommits = [];
+    for (let i = 0; i < branches.length; i++) {
+        allCommits.push(getAllCommits(new Paginator(branches[0].data)));
+    }
+    for (let i = 0; i < branches.length; i++) {
+        let latestCommit = (await branches[i].data.clone().json())[0];
+        let queue = [latestCommit];
+        let curAllCommits = allCommits[i];
+        while (queue.length !== 0) {
+            let curCommit = queue.shift();
+            //TODO search in set consisting of every commit
+            let curParent = curAllCommits.find(x => x.sha === curCommit.parents[0].sha);
+            let chain = [curCommit];
+            while (mainArray.find(x => x.sha === curParent.sha) !== undefined) {
+                curCommit = curParent;
+                chain.push(curCommit);
+                if (curCommit.parents.length > 1 && cur) {
 
-
-            // searching for the beginning of the branch
-            let mainBranch = commitPool[0];
-            let pos = 0;
-            let found = false;
-            while (!found) {
-                let mainParentN = 0;
-                if (mainBranch.parents.length === 2) {
-                    let branch1 = await fetchWithSha(mainBranch.parents[0].sha);
-                    let branch2 = await fetchWithSha(mainBranch.parents[1].sha);
-                    if (await distinguishMainMerged(new Paginator(branch1) !== branch1)) {
-                        mainParentN = 1;
-                    }
                 }
-                for (let j = pos + 1; j < commitPool.length; j++) {
-                    if (commitPool[j].sha === mainBranch.parents[mainParentN].sha) {
-                        if (initial.has(commitPool[j])) {
-                            found = true;
-                            await appendDescendant(initial, commitPool[j].sha, mainBranch);
-                            break;
-                        }
-                        commitPool[j].descendants.push(mainBranch);
-                        mainBranch = commitPool[j];
-                        pos = j;
-                    }
-                }
-            }
-            for (let cmtn = 0; cmtn < commitPool.length; cmtn++) {
-                // if main branch has
+                curParent = curAllCommits.find(x => x.sha === curCommit.parents[0].sha);
             }
         }
+
     }
 
-    async function appendDescendant (cur, toSha, newDescendant) {
-        for (let i = 0; i < notCompletlyMerged.length; i++) {
-            let item = notCompletlyMerged[i];
-            if (item.sha === toSha) {
-                item.descendants.push(newDescendant);
-                if (item.descendants.length === 2) {
-                    if (await distinguishMainMerged(cur.descendants[0], cur.descendants[1])[0] !== cur.descendants[0]) {
-                        swap(cur.descendants[0], cur.descendants[1]);
-                    }
-                }
-                return;
-            }
-        }
 
-        let found = false;
-        async function appendDescendantRec (cur, toSha, newDescendant) {
-            if (found) return;
-            if (cur.sha === toSha) {
-                cur.descendants.push(newDescendant);
-                if (cur.descendants.length === 2) {
-                    if (await distinguishMainMerged(cur.descendants[0], cur.descendants[1])[0] !== cur.descendants[0]) {
-                        swap(cur.descendants[0], cur.descendants[1]);
-                    }
-                }
-                found = true;
-            }
-            for (let i = 0; i < cur.descendants.length; i++) {
-                await appendDescendantRec(cur.descendants[i], toSha, newDescendant);
-            }
-        }
-        await appendDescendantRec(cur, toSha, newDescendant);
-    }
-
-    async function distinguishMainMerged (paginator1, paginator2) {
-        if (await getTotalCommitsNumber(paginator1) > await getTotalCommitsNumber(paginator2)) {
-            swap(paginator1, paginator2);
-        }
-        // [main_branch, merged_branch]
-        return [paginator1, paginator2];
-    }
 
     async function getAllCommits (paginator) {
         let allCommits = [];
@@ -315,6 +235,13 @@ async function buildGraph () {
             let page = await paginator.items.clone().json();
             return page.length;
         }
+    }
+
+    async function getFristCommit (paginator) {
+        let first;
+        if (paginator.links.last !== "") await paginator.last();
+        first = (await paginator.items.clone().json())[paginator.items[paginator.items.length-1]];
+        return first;
     }
 }
 
