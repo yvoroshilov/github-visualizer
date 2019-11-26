@@ -185,28 +185,60 @@ async function setBranchStats (branch) {
 }
 
 async function buildGraph () {
-
-    let mainArray = [await getFristCommit(new Paginator(branches[0].data))];
     let allCommits = [];
+    let allUniqueCommits = [];
+    let commitSet = [];
     for (let i = 0; i < branches.length; i++) {
-        allCommits.push(getAllCommits(new Paginator(branches[0].data)));
+        allCommits.push(await getAllCommits(new Paginator(branches[i].data)));
+        for (let j = 0; j < allCommits[i].length; j++) {
+            if (allUniqueCommits.find(x => x.sha === allCommits[i][j].sha) === undefined) {
+                allUniqueCommits.push(allCommits[i][j]);
+            }
+        }
     }
-    for (let i = 0; i < branches.length; i++) {
-        let latestCommit = (await branches[i].data.clone().json())[0];
+
+    let brsDefaultFirst = [];
+    Object.assign(brsDefaultFirst, branches);
+    brsDefaultFirst.splice(brsDefaultFirst.indexOf(defaultBranch), 1);
+    brsDefaultFirst.splice(0, 0, defaultBranch);
+    let tmp = allCommits.splice(branches.indexOf(defaultBranch), 1)[0];
+    allCommits.splice(0, 0, tmp);
+
+    let mainArray = [await getFirstCommit(new Paginator(brsDefaultFirst[0].data))];
+    for (let i = 0; i < brsDefaultFirst.length; i++) {
+        let latestCommit = (await brsDefaultFirst[i].data.clone().json())[0];
         let queue = [latestCommit];
-        let curAllCommits = allCommits[i];
+        //let curAllCommits = allCommits[i];
         while (queue.length !== 0) {
             let curCommit = queue.shift();
-            //TODO search in set consisting of every commit
-            let curParent = curAllCommits.find(x => x.sha === curCommit.parents[0].sha);
+            let curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
             let chain = [curCommit];
-            while (mainArray.find(x => x.sha === curParent.sha) !== undefined) {
+            // *—*—*
+            //    \
+            // *—*—*—*
+            if (graphSearch(mainArray, curCommit) !== undefined) continue;
+            while (graphSearch(mainArray, curParent) === undefined) {
+                if (curCommit.parents.length > 1) {
+                    for (let j = 1; j < curCommit.parents.length; j++) {
+                        let anotherParent = allUniqueCommits.find(x => x.sha === curCommit.parents[j].sha);
+                        anotherParent.mergeCommit = curCommit;
+                        queue.push(anotherParent);
+                    }
+                }
                 curCommit = curParent;
                 chain.push(curCommit);
-                if (curCommit.parents.length > 1 && cur) {
-
+                curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
+            }
+            chain.reverse();
+            if (mainArray.length !== 1) {
+                let to = graphSearch(mainArray, curParent);
+                if (!("children" in to)) {
+                    to.children = [chain];
+                } else {
+                    to.children.push(chain);
                 }
-                curParent = curAllCommits.find(x => x.sha === curCommit.parents[0].sha);
+            } else {
+                mainArray.push(...chain);
             }
         }
 
@@ -217,11 +249,11 @@ async function buildGraph () {
     async function getAllCommits (paginator) {
         let allCommits = [];
         let curPage = await paginator.items.clone().json();
-        allCommits.push(curPage);
+        allCommits.push(...curPage);
         while (paginator.links.next !== "") {
             await paginator.next();
             curPage = await paginator.items.clone().json();
-            allCommits.push(curPage);
+            allCommits.push(...curPage);
         }
         return allCommits;
     }
@@ -237,12 +269,36 @@ async function buildGraph () {
         }
     }
 
-    async function getFristCommit (paginator) {
+    async function getFirstCommit (paginator) {
         let first;
         if (paginator.links.last !== "") await paginator.last();
-        first = (await paginator.items.clone().json())[paginator.items[paginator.items.length-1]];
+        first = (await paginator.items.clone().json());
+        first = first[first.length-1];
         return first;
     }
+
+    function graphSearch (graph, item) {
+        let found = undefined;
+        function rec (chain, item) {
+            if (found) return;
+            for (let i = 0; i < chain.length; i++) {
+                let cur = chain[i];
+                if (cur.sha === item.sha) {
+                    found = cur;
+                    return;
+                }
+                if ("children" in chain[i]) {
+                    for (let j = 0; j < chain[i].children.length; j++) {
+                        rec(chain[i].children[j], item);
+                    }
+                }
+                if (found) return;
+            }
+        }
+        rec(graph, item);
+        return found;
+    }
+    console.log(mainArray);
 }
 
 
@@ -261,4 +317,19 @@ async function fetchWithSha (sha) {
         .concat(`?per_page=${COMMITS_PER_PAGE}&sha=${sha}`),
         OPTIONS
     )
+}
+
+function deepCopy (aObject) {
+    if (!aObject) {
+        return aObject;
+    }
+
+    let v;
+    let bObject = Array.isArray(aObject) ? [] : {};
+    for (const k in aObject) {
+        v = aObject[k];
+        bObject[k] = (typeof v === "object") ? deepCopy(v) : v;
+    }
+
+    return bObject;
 }
