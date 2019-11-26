@@ -217,14 +217,16 @@ async function buildGraph () {
             //    \
             // *—*—*—*
             if (graphSearch(mainArray, curCommit) !== undefined) continue;
-            while (graphSearch(mainArray, curParent) === undefined) {
+            while (true) {
                 if (curCommit.parents.length > 1) {
                     for (let j = 1; j < curCommit.parents.length; j++) {
                         let anotherParent = allUniqueCommits.find(x => x.sha === curCommit.parents[j].sha);
                         anotherParent.mergeCommit = curCommit;
-                        queue.push(anotherParent);
+                        if (!graphSearch(mainArray, anotherParent)) queue.push(anotherParent);
+
                     }
                 }
+                if (graphSearch(mainArray, curParent)) break;
                 curCommit = curParent;
                 chain.push(curCommit);
                 curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
