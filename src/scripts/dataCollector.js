@@ -18,11 +18,12 @@ fetch("https://api.github.com/rate_limit", OPTIONS)
 // --------INITIAL DATA----------
 
 // --------COLLECTED DATA--------
-let commitGraph;
 let maxCommits = 0;
 let branches;
 let defaultBranch;
 let usrAndRepo;
+let allUniqueCommits = [];
+let orderedCommits = [];
 // --------COLLECTED DATA--------
 
 function Paginator (items) {
@@ -103,15 +104,16 @@ function Paginator (items) {
     this.items = items;
 }
 
+/*
 async function fetchSmth () {
-    /*
-const gHApiUrl = "https://api.github.com";
-const response = await fetch(gHApiUrl);
-const result = await response.json();
-console.log(result);
-debugger;
-*/
+    const gHApiUrl = "https://api.github.com";
+    const response = await fetch(gHApiUrl);
+    const result = await response.json();
+    console.log(result);
+    debugger;
 }
+*/
+
 async function startFetching (decomposedInput) {
     usrAndRepo = decomposedInput;
 
@@ -185,9 +187,8 @@ async function setBranchStats (branch) {
 }
 
 async function buildGraph () {
+    // all commits for every branch
     let allCommits = [];
-    let allUniqueCommits = [];
-    let commitSet = [];
     for (let i = 0; i < branches.length; i++) {
         allCommits.push(await getAllCommits(new Paginator(branches[i].data)));
         for (let j = 0; j < allCommits[i].length; j++) {
@@ -204,11 +205,11 @@ async function buildGraph () {
     let tmp = allCommits.splice(branches.indexOf(defaultBranch), 1)[0];
     allCommits.splice(0, 0, tmp);
 
-    let mainArray = [await getFirstCommit(new Paginator(brsDefaultFirst[0].data))];
+    orderedCommits = [await getFirstCommit(new Paginator(brsDefaultFirst[0].data))];
+    let lastBranchN = -1;
     for (let i = 0; i < brsDefaultFirst.length; i++) {
         let latestCommit = (await brsDefaultFirst[i].data.clone().json())[0];
         let queue = [latestCommit];
-        //let curAllCommits = allCommits[i];
         while (queue.length !== 0) {
             let curCommit = queue.shift();
             let curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
@@ -216,31 +217,44 @@ async function buildGraph () {
             // *—*—*
             //    \
             // *—*—*—*
-            if (graphSearch(mainArray, curCommit) !== undefined) continue;
+            if (graphSearch(orderedCommits, curCommit) !== undefined) continue;
             while (true) {
                 if (curCommit.parents.length > 1) {
                     for (let j = 1; j < curCommit.parents.length; j++) {
                         let anotherParent = allUniqueCommits.find(x => x.sha === curCommit.parents[j].sha);
-                        anotherParent.mergeCommit = curCommit;
-                        if (!graphSearch(mainArray, anotherParent)) queue.push(anotherParent);
+                        if ("mergeCommits" in anotherParent) {
+                            anotherParent.mergeCommits.push(curCommit);
+                        } else {
+                            anotherParent.mergeCommits = [curCommit];
+                        }
+                        if (!graphSearch(orderedCommits, anotherParent)) queue.push(anotherParent);
 
                     }
                 }
-                if (graphSearch(mainArray, curParent)) break;
+                if (graphSearch(orderedCommits, curParent)) break;
                 curCommit = curParent;
                 chain.push(curCommit);
                 curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
             }
             chain.reverse();
-            if (mainArray.length !== 1) {
-                let to = graphSearch(mainArray, curParent);
+            /*
+            // specifying branch name
+            if (lastBranchN !== i) {
+                chain[0]
+                lastB
+                ranchN = i;
+            }
+
+             */
+            if (orderedCommits.length !== 1) {
+                let to = graphSearch(orderedCommits, curParent);
                 if (!("children" in to)) {
                     to.children = [chain];
                 } else {
                     to.children.push(chain);
                 }
             } else {
-                mainArray.push(...chain);
+                orderedCommits.push(...chain);
             }
         }
 
@@ -300,7 +314,21 @@ async function buildGraph () {
         rec(graph, item);
         return found;
     }
-    console.log(mainArray);
+    /*
+    function markBranch (start, branch) {
+
+            for (let j = 0; j < chain.length; j++) {
+                if ("belongsTo" in chain[j]) {
+                    chain[j].belongsTo.push(brsDefaultFirst[i]);
+                } else {
+                    chain[j].belongsTo = [brsDefaultFirst[i]];
+                }
+            }
+    }
+
+
+     */
+    console.log(orderedCommits);
 }
 
 
