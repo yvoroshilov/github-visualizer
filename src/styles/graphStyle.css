@@ -3,8 +3,8 @@ svg {
 }
 
 line {
-    stroke-width: 55;
-    stroke: red;
+    stroke-width: 30;
+    stroke: orange;
 }
 
 path {
@@ -15,4 +15,8 @@ path {
 
 circle {
     fill: orange;
+}
+
+text {
+    fill: white;
 }

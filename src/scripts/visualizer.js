@@ -40,9 +40,24 @@ function computeBaseValues () {
 async function visualize () {
     await buildGraph();
     setLevels();
+    createLines();
     computeBaseValues();
     const svg = d3.select("svg");
-    console.log(svgElem = document.getElementsByTagName("svg")[0].getBoundingClientRect());
+    console.log(document.getElementsByTagName("svg")[0].getBoundingClientRect());
+    console.log(levels);
+    console.log(straightLines);
+    console.log(curveLines);
+
+    // drawing straight lines
+    svg.selectAll("line")
+            .data(straightLines)
+        .enter().append("line")
+            .attr("x1", (d) => initialPosX + allUniqueCommits.indexOf(d.begin) * distanceHorizontal)
+            .attr("y1", (d) => initialPosY - levels[allUniqueCommits.indexOf(d.begin)] * distanceVertical)
+            .attr("x2", (d) => initialPosX + allUniqueCommits.indexOf(d.end) * distanceHorizontal)
+            .attr("y2", (d) => initialPosY - levels[allUniqueCommits.indexOf(d.end)] * distanceVertical);
+
+    
 
     // drawing nodes
     svg.selectAll("circle")
@@ -51,14 +66,17 @@ async function visualize () {
             .attr("cx", (d, i) => initialPosX + i * distanceHorizontal)
             .attr("cy", (d, i) => initialPosY - levels[i] * distanceVertical)
             .attr("r", radius.toString());
-
-    // drawing lines
-
+    svg.selectAll("text")
+            .data(allUniqueCommits)
+        .enter().append("text")
+            .attr("x", (d, i) => initialPosX + i * distanceHorizontal - radius)
+            .attr("y", (d, i) => initialPosY - levels[i] * distanceVertical)
+            .text((d) => d.sha.slice(0, 8));
 
 }
 
 // start and end - arrays [x, y]
-function getEdge(start, end) {
+function getCurve(start, end) {
     /*
         1 - start point
         2 - control point
@@ -173,8 +191,6 @@ function setLevels () {
         if (dateA > dateB) return 1;
         if (dateA === dateB) return 0;
     }
-
-    console.log(levels);
 }
 
 function createLines () {
@@ -184,14 +200,31 @@ function createLines () {
         let lineBegin = curChain[0];
         let lineEnd = curChain[curChain.length - 1];
         straightLines.push({
-            begin: lineBegin,
-            end: lineEnd,
-            level: levels[allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha))]
+            begin: allUniqueCommits.find(x => x.sha === lineBegin.sha),
+            end: allUniqueCommits.find(x => x.sha === lineEnd.sha),
+            number: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
         });
         for (let i = 0; i < curChain.length; i++) {
+            if ("mergeCommits" in curChain[i]) {
+                for (let j = 0; j < curChain[i].mergeCommits.length; j++) {
+                    curveLines.push({
+                        begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
+                        end: allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha),
+                        numberBegin: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
+                        numberEnd: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha))
+                    });
+                }
+            }
             if ("children" in curChain[i]) {
                 for (let j = 0; j < curChain[i].children.length; j++) {
                     queue.push(curChain[i].children[j]);
+
+                    curveLines.push({
+                        begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
+                        end: allUniqueCommits.find(x => x.sha === curChain[i].children[j][0].sha),
+                        numberBegin: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
+                        numberEnd: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[i].children[j][0].sha))
+                    });
                 }
             }
         }
