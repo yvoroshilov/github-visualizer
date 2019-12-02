@@ -1,40 +1,61 @@
-let svgElem = document.getElementsByTagName("svg")[0];
-
-let svgSize = {
-    width: svgElem.getBoundingClientRect().width,
-    height: svgElem.getBoundingClientRect().height
-};
-
 let levels = [];
-
-async function visualize () {
-    await buildGraph();
-    setLevels();
-}
+let straightLines = [];
+let curveLines = [];
 
 /*
 const MAX_NODES = 30;
 const MAX_BRANCHES = 10;
-const BASE_WIDTH = svgSize.width;
-const BASE_HEIGHT = svgSize.height;
 const BASE_RADIUS_MAX = 80;
 const BASE_RADIUS_MIN = 30;
 const BASE_DISTANCE_HORIZONTAL_MAX = 330;
 const BASE_DISTANCE_VERTICAL_MIN = 130;
-
-function visualize () {
-    const RADIUS = 30;
-    const DISTANCE_HORIZONTAL = 123.75;
-    const DISTANCE_VERTICAL = 130;
-    // with no padding accounting
-    const WIDTH = (RADIUS * 2 + (DISTANCE_HORIZONTAL - RADIUS * 2)) * maxCommits > svgSize.width ?
-        (RADIUS * 2 + (DISTANCE_HORIZONTAL - RADIUS * 2)) * maxCommits : svgSize.width;
-
-
-
-    debugger;
-}
 */
+// with no padding included
+//let width = (radius * 2 + (distanceHorizontal - radius * 2)) * maxCommits > svgSize.width ? (radius * 2 + (distanceHorizontal - radius * 2)) * maxCommits : svgSize.width;
+let baseWidth;
+let baseHeight;
+
+let radius;
+let distanceHorizontal;
+let distanceVertical;
+let initialPosX;
+let initialPosY;
+
+function computeBaseValues () {
+    let svgElem = document.getElementsByTagName("svg")[0];
+    let svgSize = {
+        width: svgElem.getBoundingClientRect().width,
+        height: svgElem.getBoundingClientRect().height
+    };
+    baseWidth = svgSize.width;
+    baseHeight = svgSize.height;
+
+    initialPosX = 0.05 * baseWidth;
+    initialPosY = 0.9 * baseHeight;
+    distanceVertical = 130;
+    distanceHorizontal = 124;
+    radius = 30;
+}
+
+async function visualize () {
+    await buildGraph();
+    setLevels();
+    computeBaseValues();
+    const svg = d3.select("svg");
+    console.log(svgElem = document.getElementsByTagName("svg")[0].getBoundingClientRect());
+
+    // drawing nodes
+    svg.selectAll("circle")
+            .data(allUniqueCommits)
+        .enter().append("circle")
+            .attr("cx", (d, i) => initialPosX + i * distanceHorizontal)
+            .attr("cy", (d, i) => initialPosY - levels[i] * distanceVertical)
+            .attr("r", radius.toString());
+
+    // drawing lines
+
+
+}
 
 // start and end - arrays [x, y]
 function getEdge(start, end) {
@@ -107,7 +128,6 @@ function getEdge(start, end) {
     return str;
 }
 
-
 function setLevels () {
     allUniqueCommits.sort(comparator);
     for (let i = 0; i < allUniqueCommits.length; i++) {
@@ -155,5 +175,25 @@ function setLevels () {
     }
 
     console.log(levels);
+}
 
+function createLines () {
+    let queue = [orderedCommits];
+    while (queue.length !== 0) {
+        let curChain = queue.shift();
+        let lineBegin = curChain[0];
+        let lineEnd = curChain[curChain.length - 1];
+        straightLines.push({
+            begin: lineBegin,
+            end: lineEnd,
+            level: levels[allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha))]
+        });
+        for (let i = 0; i < curChain.length; i++) {
+            if ("children" in curChain[i]) {
+                for (let j = 0; j < curChain[i].children.length; j++) {
+                    queue.push(curChain[i].children[j]);
+                }
+            }
+        }
+    }
 }
