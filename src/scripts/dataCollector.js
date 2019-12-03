@@ -333,7 +333,7 @@ async function buildGraph () {
 
 
 /*
-    ***auxilary***
+    auxilary
 */
 
 function swap (a, b) {

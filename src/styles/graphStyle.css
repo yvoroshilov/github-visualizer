@@ -3,14 +3,12 @@ svg {
 }
 
 line {
-    stroke-width: 30;
     stroke: orange;
 }
 
 path {
-    stroke-width: 2;
-    stroke: green;
-    fill: transparent;
+    stroke: orange;
+    fill: orange;
 }
 
 circle {

@@ -20,6 +20,7 @@ let distanceHorizontal;
 let distanceVertical;
 let initialPosX;
 let initialPosY;
+let lineWidth;
 
 function computeBaseValues () {
     let svgElem = document.getElementsByTagName("svg")[0];
@@ -30,11 +31,12 @@ function computeBaseValues () {
     baseWidth = svgSize.width;
     baseHeight = svgSize.height;
 
-    initialPosX = 0.05 * baseWidth;
+    initialPosX = 0.04 * baseWidth;
     initialPosY = 0.9 * baseHeight;
     distanceVertical = 130;
     distanceHorizontal = 124;
     radius = 30;
+    lineWidth = 30;
 }
 
 async function visualize () {
@@ -47,36 +49,69 @@ async function visualize () {
     console.log(levels);
     console.log(straightLines);
     console.log(curveLines);
+    /*
+     svg.append("path")
+        .attr("d", getEdge([150, 150], [190, 100]));
+     */
 
     // drawing straight lines
     svg.selectAll("line")
             .data(straightLines)
         .enter().append("line")
-            .attr("x1", (d) => initialPosX + allUniqueCommits.indexOf(d.begin) * distanceHorizontal)
-            .attr("y1", (d) => initialPosY - levels[allUniqueCommits.indexOf(d.begin)] * distanceVertical)
-            .attr("x2", (d) => initialPosX + allUniqueCommits.indexOf(d.end) * distanceHorizontal)
-            .attr("y2", (d) => initialPosY - levels[allUniqueCommits.indexOf(d.end)] * distanceVertical);
+            //.attr("class", "straight")
+            .attr("x1", (d) => getPosX(allUniqueCommits.indexOf(d.begin)))
+            .attr("y1", (d) => getPosY(allUniqueCommits.indexOf(d.begin)))
+            .attr("x2", (d) => getPosX(allUniqueCommits.indexOf(d.end)))
+            .attr("y2", (d) => getPosY(allUniqueCommits.indexOf(d.end)))
+            .attr("stroke-width", lineWidth);
 
-    
+    // drawing curve lines
+    svg.selectAll("path")
+            .data(curveLines)
+        .enter().append("path")
+            //.attr("class", "curve")
+            .attr("d" , function (d) {
+                let beginX = getPosX(allUniqueCommits.indexOf(d.begin)) + radius / 2;
+                let beginY = getPosY(allUniqueCommits.indexOf(d.begin)) - radius / 2;
+                let endX = getPosX(allUniqueCommits.indexOf(d.end)) - radius / 2;
+                let endY = getPosY(allUniqueCommits.indexOf(d.end)) - radius / 2;
+                if (levels[allUniqueCommits.indexOf(d.begin)] < levels[allUniqueCommits.indexOf(d.end)]) {
+                    return getCurve([beginX, beginY], [endX, endY]);
+                } else {
+                    return getCurve([beginX, beginY], [endX, endY], true);
+                }
+            })
+            .attr("stroke-width", 0);
+
 
     // drawing nodes
     svg.selectAll("circle")
             .data(allUniqueCommits)
         .enter().append("circle")
-            .attr("cx", (d, i) => initialPosX + i * distanceHorizontal)
-            .attr("cy", (d, i) => initialPosY - levels[i] * distanceVertical)
-            .attr("r", radius.toString());
+            .attr("cx", (d, i) => getPosX(i))
+            .attr("cy", (d, i) => getPosY(i))
+            .attr("r", radius);
     svg.selectAll("text")
             .data(allUniqueCommits)
         .enter().append("text")
-            .attr("x", (d, i) => initialPosX + i * distanceHorizontal - radius)
-            .attr("y", (d, i) => initialPosY - levels[i] * distanceVertical)
+            .attr("x", (d, i) => getPosX(i) - radius)
+            .attr("y", (d, i) => getPosY(i))
             .text((d) => d.sha.slice(0, 8));
+
+
+
+    function getPosX (index) {
+        return initialPosX + index * distanceHorizontal;
+    }
+
+    function getPosY (index) {
+        return initialPosY - levels[index] * distanceVertical;
+    }
 
 }
 
 // start and end - arrays [x, y]
-function getCurve(start, end) {
+function getCurve(start, end, reversed = false) {
     /*
         1 - start point
         2 - control point
@@ -85,17 +120,26 @@ function getCurve(start, end) {
     */
     function constructEdge(points) {
         const lineGen = d3.line().curve(d3.curveBasis);
-        const edgeWidth = 4;
         let path = lineGen(points);
-
-        path += `L${points[3][0]},${points[3][1] + edgeWidth}`;
-        points.forEach(p => {
-            p[0] += edgeWidth;
-            p[1] += edgeWidth;
-        });
-        points.reverse();
-        points[0][0] -= edgeWidth;
-        points[3][0] -= edgeWidth;
+        if (reversed) {
+            path += `L${points[3][0]},${points[3][1] + lineWidth}`;
+            points.forEach(p => {
+                p[0] -= lineWidth;
+                p[1] += lineWidth;
+            });
+            points.reverse();
+            points[0][0] += lineWidth;
+            points[3][0] += lineWidth;
+        } else {
+            path += `L${points[3][0]},${points[3][1] + lineWidth}`;
+            points.forEach(p => {
+                p[0] += lineWidth;
+                p[1] += lineWidth;
+            });
+            points.reverse();
+            points[0][0] -= lineWidth;
+            points[3][0] -= lineWidth;
+        }
 
         let l = path.length;
         path += lineGen(points);
@@ -115,12 +159,22 @@ function getCurve(start, end) {
         return path.slice(0, start - 1) + path.slice(i);
     }
 
-    let points = [
-        start,
-        [166, 150],
-        [170, 100],
-        end
-    ];
+    let points;
+    if (reversed) {
+        points = [
+            start,
+            [start[0] + distanceHorizontal / 2, start[1]],
+            [end[0] - distanceHorizontal / 2 + lineWidth, end[1]],
+            end
+        ];
+    } else {
+        points = [
+            start,
+            [start[0] + distanceHorizontal / 2 - lineWidth, start[1]],
+            [end[0] - distanceHorizontal / 2, end[1]],
+            end
+        ];
+    }
     /*
     d3.select("svg").append("g")
             .selectAll("circle")
@@ -128,9 +182,10 @@ function getCurve(start, end) {
         .enter().append("circle")
             .attr("cx", (d) => d[0])
             .attr("cy", (d) => d[1])
-            .attr("r", 1);
+            .attr("r", 1)
+            .attr("fill", "black");
+        */
 
-     */
     let str = constructEdge(points);
     /*
     d3.select("svg").append("g")
@@ -141,8 +196,8 @@ function getCurve(start, end) {
         .attr("cy", (d) => d[1])
         .attr("r", 1)
         .attr("fill", "blue");
+    */
 
-     */
     return str;
 }
 
@@ -202,7 +257,6 @@ function createLines () {
         straightLines.push({
             begin: allUniqueCommits.find(x => x.sha === lineBegin.sha),
             end: allUniqueCommits.find(x => x.sha === lineEnd.sha),
-            number: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
         });
         for (let i = 0; i < curChain.length; i++) {
             if ("mergeCommits" in curChain[i]) {
@@ -210,8 +264,6 @@ function createLines () {
                     curveLines.push({
                         begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
                         end: allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha),
-                        numberBegin: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
-                        numberEnd: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha))
                     });
                 }
             }
@@ -222,8 +274,6 @@ function createLines () {
                     curveLines.push({
                         begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
                         end: allUniqueCommits.find(x => x.sha === curChain[i].children[j][0].sha),
-                        numberBegin: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === lineBegin.sha)),
-                        numberEnd: allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[i].children[j][0].sha))
                     });
                 }
             }
