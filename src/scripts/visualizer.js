@@ -45,37 +45,51 @@ async function visualize () {
     createLines();
     computeBaseValues();
     const svg = d3.select("svg");
+    const g = svg.append("g");
     console.log(document.getElementsByTagName("svg")[0].getBoundingClientRect());
     console.log(levels);
     console.log(straightLines);
     console.log(curveLines);
+    svg.attr("viewBox", [0, 0, baseWidth, baseHeight]);
+    svg.call(d3.zoom()
+            .extent([[0, 0], [baseWidth, baseHeight]])
+            .scaleExtent([0.05, 8])
+            .on("zoom", () => g.attr("transform", d3.event.transform)));
     /*
      svg.append("path")
         .attr("d", getEdge([150, 150], [190, 100]));
      */
 
     // drawing straight lines
-    svg.selectAll("line")
+    g.selectAll("line")
             .data(straightLines)
         .enter().append("line")
             //.attr("class", "straight")
-            .attr("x1", (d) => getPosX(allUniqueCommits.indexOf(d.begin)))
-            .attr("y1", (d) => getPosY(allUniqueCommits.indexOf(d.begin)))
-            .attr("x2", (d) => getPosX(allUniqueCommits.indexOf(d.end)))
-            .attr("y2", (d) => getPosY(allUniqueCommits.indexOf(d.end)))
+            .attr("x1", (d, i) => {
+                if (i === 0) {
+                    return getPosX(indexOfSha(allUniqueCommits, d.parent.sha)) - radius / 2 - 1;
+                } else {
+                    return getPosX(indexOfSha(allUniqueCommits, d.parent.sha) + 1) - radius / 2 - 1;
+                }
+            })
+            .attr("y1", (d) => getPosY(indexOfSha(allUniqueCommits, d.begin.sha)))
+            .attr("x2", (d) => getPosX(indexOfSha(allUniqueCommits, d.end.sha)))
+            .attr("y2", (d) => getPosY(indexOfSha(allUniqueCommits, d.end.sha)))
             .attr("stroke-width", lineWidth);
 
     // drawing curve lines
-    svg.selectAll("path")
+    g.selectAll("path")
             .data(curveLines)
         .enter().append("path")
             //.attr("class", "curve")
             .attr("d" , function (d) {
-                let beginX = getPosX(allUniqueCommits.indexOf(d.begin)) + radius / 2;
-                let beginY = getPosY(allUniqueCommits.indexOf(d.begin)) - radius / 2;
-                let endX = getPosX(allUniqueCommits.indexOf(d.end)) - radius / 2;
-                let endY = getPosY(allUniqueCommits.indexOf(d.end)) - radius / 2;
-                if (levels[allUniqueCommits.indexOf(d.begin)] < levels[allUniqueCommits.indexOf(d.end)]) {
+                let beginIndex = indexOfSha(allUniqueCommits, d.begin.sha);
+                let endIndex = indexOfSha(allUniqueCommits, d.end.sha);
+                let beginX = getPosX(beginIndex) + radius / 2;
+                let beginY = getPosY(beginIndex) - radius / 2;
+                let endX = getPosX(beginIndex + 1) - radius / 2;
+                let endY = getPosY(endIndex) - radius / 2;
+                if (levels[beginIndex] < levels[endIndex]) {
                     return getCurve([beginX, beginY], [endX, endY]);
                 } else {
                     return getCurve([beginX, beginY], [endX, endY], true);
@@ -85,13 +99,13 @@ async function visualize () {
 
 
     // drawing nodes
-    svg.selectAll("circle")
+    g.selectAll("circle")
             .data(allUniqueCommits)
         .enter().append("circle")
             .attr("cx", (d, i) => getPosX(i))
             .attr("cy", (d, i) => getPosY(i))
             .attr("r", radius);
-    svg.selectAll("text")
+    g.selectAll("text")
             .data(allUniqueCommits)
         .enter().append("text")
             .attr("x", (d, i) => getPosX(i) - radius)
@@ -212,23 +226,23 @@ function setLevels () {
     let queue = [{chain: orderedCommits, parent: orderedCommits[0]}];
     while (queue.length !== 0) {
         let curChain = queue[0].chain;
-        let curParent = queue[0].parent;
+        let firstInChain = queue[0].parent;
         queue.shift();
 
-        let begin = allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curParent.sha));
-        let end = allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[curChain.length-1].sha));
+        let begin = indexOfSha(allUniqueCommits, firstInChain.sha);
+        let end = indexOfSha(allUniqueCommits, curChain[curChain.length-1].sha);
         curLevel = levels[begin];
         for (let i = begin; i < end; i++) {
             curLevel = Math.max(curLevel, levels[i]);
         }
         curLevel++;
-        if ("children" in curParent && curParent.children.length > 1) {
-            let x = curParent.children.length - curParent.children.indexOf(curParent.children.find(x => x[0].sha === curChain[0].sha));
+        if ("children" in firstInChain && firstInChain.children.length > 1) {
+            let x = firstInChain.children.length - indexOfSha(firstInChain.children, curChain[0].sha);
             curLevel = Math.max(curLevel, levels[begin] + x);
         }
 
         for (let i = curChain.length - 1; i >= 0; i--) {
-            let index = allUniqueCommits.indexOf(allUniqueCommits.find(x => x.sha === curChain[i].sha));
+            let index = indexOfSha(allUniqueCommits, curChain[i].sha);
             levels[index] = curLevel;
 
             if ("children" in curChain[i]) {
@@ -249,14 +263,17 @@ function setLevels () {
 }
 
 function createLines () {
-    let queue = [orderedCommits];
+    let queue = [{chain: orderedCommits, parent: orderedCommits[0]}];
     while (queue.length !== 0) {
-        let curChain = queue.shift();
+        let curParent = queue[0].parent;
+        let curChain = queue[0].chain;
         let lineBegin = curChain[0];
         let lineEnd = curChain[curChain.length - 1];
+        queue.shift();
         straightLines.push({
             begin: allUniqueCommits.find(x => x.sha === lineBegin.sha),
             end: allUniqueCommits.find(x => x.sha === lineEnd.sha),
+            parent: curParent
         });
         for (let i = 0; i < curChain.length; i++) {
             if ("mergeCommits" in curChain[i]) {
@@ -269,7 +286,7 @@ function createLines () {
             }
             if ("children" in curChain[i]) {
                 for (let j = 0; j < curChain[i].children.length; j++) {
-                    queue.push(curChain[i].children[j]);
+                    queue.push({chain: curChain[i].children[j], parent: curChain[i]});
 
                     curveLines.push({
                         begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
@@ -279,4 +296,8 @@ function createLines () {
             }
         }
     }
+}
+
+function indexOfSha (arr, sha) {
+    return arr.indexOf(arr.find(x => x.sha === sha))
 }
