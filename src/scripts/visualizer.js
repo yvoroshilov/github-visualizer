@@ -53,7 +53,7 @@ async function visualize () {
     svg.attr("viewBox", [0, 0, baseWidth, baseHeight]);
     svg.call(d3.zoom()
             .extent([[0, 0], [baseWidth, baseHeight]])
-            .scaleExtent([0.05, 8])
+            .scaleExtent([0.005, 8])
             .on("zoom", () => g.attr("transform", d3.event.transform)));
     /*
      svg.append("path")
@@ -296,6 +296,18 @@ function createLines () {
             }
         }
     }
+    // processing commits with no parents
+    for (let i = 0; i < levels.length; i++) {
+        if (levels[i] === -1) {
+            for (let j = 0; j < allUniqueCommits[i].mergeCommits.length; j++) {
+                curveLines.push({
+                    begin: allUniqueCommits.find(x => x.sha === allUniqueCommits[i].sha),
+                    end: allUniqueCommits.find(x => x.sha === allUniqueCommits[i].mergeCommits[j].sha)
+                });
+            }
+        }
+    }
+
 }
 
 function indexOfSha (arr, sha) {

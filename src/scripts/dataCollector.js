@@ -54,6 +54,12 @@ function Paginator (items) {
         }
     });
     this.getNewLinks = function () {
+        this.links = {
+            next: "",
+            prev: "",
+            first: "",
+            last: ""
+        };
         let links = (_items.headers.get("Link"));
         if (!links) return;
         links = links.split(",");
@@ -212,7 +218,10 @@ async function buildGraph () {
         let queue = [latestCommit];
         while (queue.length !== 0) {
             let curCommit = queue.shift();
-            let curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
+            let curParent = undefined;
+            if (curCommit.parents.length > 0) {
+                curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
+            }
             let chain = [curCommit];
             // *—*—*
             //    \
@@ -231,10 +240,13 @@ async function buildGraph () {
 
                     }
                 }
+                if (curParent === undefined) break;
                 if (graphSearch(orderedCommits, curParent)) break;
                 curCommit = curParent;
                 chain.push(curCommit);
-                curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
+                if (curParent.parents.length > 0) {
+                    curParent = allUniqueCommits.find(x => x.sha === curCommit.parents[0].sha);
+                }
             }
             chain.reverse();
             /*
@@ -246,6 +258,7 @@ async function buildGraph () {
             }
 
              */
+            if (curParent === undefined) continue;
             if (orderedCommits.length !== 1) {
                 let to = graphSearch(orderedCommits, curParent);
                 if (!("children" in to)) {
