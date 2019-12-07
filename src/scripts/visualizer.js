@@ -1,4 +1,6 @@
 let levels = [];
+// each cell represents a set of occupied levels
+let levelLines = [];
 let straightLines = [];
 let curveLines = [];
 
@@ -50,6 +52,8 @@ async function visualize () {
     console.log(levels);
     console.log(straightLines);
     console.log(curveLines);
+    console.log(levelLines);
+    console.log(allUniqueCommits);
     svg.attr("viewBox", [0, 0, baseWidth, baseHeight]);
     svg.call(d3.zoom()
             .extent([[0, 0], [baseWidth, baseHeight]])
@@ -59,23 +63,19 @@ async function visualize () {
      svg.append("path")
         .attr("d", getEdge([150, 150], [190, 100]));
      */
-
+    /*
     // drawing straight lines
     g.selectAll("line")
             .data(straightLines)
         .enter().append("line")
             //.attr("class", "straight")
-            .attr("x1", (d, i) => {
-                if (i === 0) {
-                    return getPosX(indexOfSha(allUniqueCommits, d.parent.sha)) - radius / 2 - 1;
-                } else {
-                    return getPosX(indexOfSha(allUniqueCommits, d.parent.sha) + 1) - radius / 2 - 1;
-                }
-            })
+            .attr("x1", (d) => getPosX(indexOfSha(allUniqueCommits, d.begin.sha)))
             .attr("y1", (d) => getPosY(indexOfSha(allUniqueCommits, d.begin.sha)))
             .attr("x2", (d) => getPosX(indexOfSha(allUniqueCommits, d.end.sha)))
             .attr("y2", (d) => getPosY(indexOfSha(allUniqueCommits, d.end.sha)))
             .attr("stroke-width", lineWidth);
+
+     */
 
     // drawing curve lines
     g.selectAll("path")
@@ -85,14 +85,92 @@ async function visualize () {
             .attr("d" , function (d) {
                 let beginIndex = indexOfSha(allUniqueCommits, d.begin.sha);
                 let endIndex = indexOfSha(allUniqueCommits, d.end.sha);
-                let beginX = getPosX(beginIndex) + radius / 2;
-                let beginY = getPosY(beginIndex) - radius / 2;
-                let endX = getPosX(beginIndex + 1) - radius / 2;
-                let endY = getPosY(endIndex) - radius / 2;
-                if (levels[beginIndex] < levels[endIndex]) {
-                    return getCurve([beginX, beginY], [endX, endY]);
-                } else {
-                    return getCurve([beginX, beginY], [endX, endY], true);
+                let level = d.level;
+                let beginX;
+                let beginY;
+                let endX;
+                let endY;
+                switch (getLineStyle(beginIndex, endIndex)) {
+                    case 0: {
+                        beginX = getPosX(beginIndex) + radius / 2;
+                        beginY = getPosY(beginIndex) - radius / 2;
+                        endX = getPosX(endIndex) - radius / 2;
+                        endY = getPosY(endIndex) - radius / 2;
+
+                        let reversed = levels[beginIndex] > levels[endIndex];
+                        return getCurve([beginX, beginY], [endX, endY], reversed);
+                    }
+                    case 1: {
+                        let x1 = getPosX(beginIndex);
+                        let y1 = getPosY(beginIndex);
+                        let x2 = getPosX(endIndex - 1);
+                        let y2 = getPosY(beginIndex);
+                        g.append("line")
+                                .attr("x1", x1)
+                                .attr("y1", y1)
+                                .attr("x2", x2)
+                                .attr("y2", y2)
+                                .attr("stroke-width", lineWidth);
+                        beginX = x2 + radius / 2;
+                        beginY = y2 - radius / 2;
+                        endX = getPosX(endIndex) - radius / 2;
+                        endY = getPosY(endIndex) - radius / 2;
+
+                        let reversed = levels[beginIndex] > levels[endIndex];
+                        return getCurve([beginX, beginY], [endX, endY], reversed);
+                    }
+                    case 2: {
+                        let x1 = getPosX(beginIndex + 1);
+                        let y1 = getPosY(endIndex);
+                        let x2 = getPosX(endIndex);
+                        let y2 = getPosY(endIndex);
+                        g.append("line")
+                                .attr("x1", x1)
+                                .attr("y1", y1)
+                                .attr("x2", x2)
+                                .attr("y2", y2)
+                                .attr("stroke-width", lineWidth);
+                        beginX = getPosX(beginIndex) + radius / 2;
+                        beginY = getPosY(beginIndex) - radius / 2;
+                        endX = getPosX(beginIndex + 1) - radius / 2;
+                        endY = getPosY(endIndex) - radius / 2;
+
+                        let reversed = levels[beginIndex] > levels[endIndex];
+                        return getCurve([beginX, beginY], [endX, endY], reversed);
+                    }
+                    case 3: {
+                        let x1 = getPosX(beginIndex + 1);
+                        let y1 = getPosY(-1, level);
+                        let x2 = getPosX(endIndex - 1);
+                        let y2 = getPosY(-1, level);
+                        g.append("line")
+                                .attr("x1", x1)
+                                .attr("y1", y1)
+                                .attr("x2", x2)
+                                .attr("y2", y2)
+                                .attr("stroke-width", lineWidth);
+                        let beginX1 = getPosX(beginIndex) + radius / 2;
+                        let beginY1 = getPosY(beginIndex) - radius / 2;
+                        let endX1 = getPosX(beginIndex + 1) - radius / 2;
+                        let endY1 = getPosY(-1, level) - radius / 2;
+                        let beginX2 = x2 + radius / 2;
+                        let beginY2 = y2 - radius / 2;
+                        let endX2 = getPosX(endIndex) - radius / 2;
+                        let endY2 = getPosY(endIndex) - radius / 2;
+
+                        let reversed = levels[beginIndex] > levels[endIndex];
+                        if (reversed) {
+                            g.append("path")
+                                    .attr("d", getCurve([beginX1, beginY1], [endX1, endY1], reversed))
+                                    .attr("stroke-width", 0);
+                            return getCurve([beginX2, beginY2], [endX2, endY2], reversed);
+                        } else {
+                            g.append("path")
+                                    .attr("d", getCurve([beginX1, beginY1], [endX1, endY1]))
+                                    .attr("stroke-width", 0);
+                            return getCurve([beginX2, beginY2], [endX2, endY2]);
+                        }
+                    }
                 }
             })
             .attr("stroke-width", 0);
@@ -110,7 +188,7 @@ async function visualize () {
         .enter().append("text")
             .attr("x", (d, i) => getPosX(i) - radius)
             .attr("y", (d, i) => getPosY(i))
-            .text((d) => d.sha.slice(0, 8));
+            .text((d, i) => "(" + i + ")" + d.sha.slice(0, 8));
 
 
 
@@ -118,8 +196,29 @@ async function visualize () {
         return initialPosX + index * distanceHorizontal;
     }
 
-    function getPosY (index) {
-        return initialPosY - levels[index] * distanceVertical;
+    function getPosY (index, level = levels[index]) {
+        return initialPosY - level * distanceVertical;
+    }
+
+
+    // return values:
+    //0 - default
+    //1 - extend begin
+    //2 - extend end
+    //3 - \
+    //     -----
+    //          \
+    function getLineStyle (beginIndex, endIndex) {
+        let begin = allUniqueCommits[beginIndex];
+        let end = allUniqueCommits[endIndex];
+        if (endIndex - beginIndex === 1) return 0;
+        if ("start" in end && end.start === true) {
+            return 2;
+        }
+        if ("start" in begin && begin.start === false) {
+            return 1;
+        }
+        return 3;
     }
 
 }
@@ -217,39 +316,89 @@ function getCurve(start, end, reversed = false) {
 
 function setLevels () {
     allUniqueCommits.sort(comparator);
+    allUniqueCommits[0].start = true;
     for (let i = 0; i < allUniqueCommits.length; i++) {
         levels[i] = -1;
+        levelLines[i] = new Set();
     }
 
     let curLevel = -1;
     // contains chains
-    let queue = [{chain: orderedCommits, parent: orderedCommits[0]}];
+    let queue = [{chain: orderedCommits, chainParent: orderedCommits[0]}];
     while (queue.length !== 0) {
-        let curChain = queue[0].chain;
-        let firstInChain = queue[0].parent;
-        queue.shift();
+        if ("mergeCommit" in queue[0]) {
+            let mergeCommitIndex = indexOfSha(allUniqueCommits, queue[0].mergeCommit.sha);
+            let chainParentIndex = indexOfSha(allUniqueCommits, queue[0].chainParent.sha);
+            if (mergeCommitIndex - chainParentIndex === 1) {
+                queue.shift();
+                continue;
+            }
+            // merge can be up and down
+            curLevel = chooseLevel(chainParentIndex, mergeCommitIndex + 1, Math.min(levels[mergeCommitIndex], levels[chainParentIndex]));
+            addLevel(chainParentIndex, mergeCommitIndex + 1, curLevel);
+            let mergeCommitInParent = allUniqueCommits[chainParentIndex].mergeCommits.find(x => x.sha === allUniqueCommits[mergeCommitIndex].sha);
+            mergeCommitInParent.level = curLevel;
+            /*
+            curveLines.push({
+                begin: allUniqueCommits[chainParentIndex],
+                end: allUniqueCommits[mergeCommitIndex],
+                level: curLevel
+            });
+            */
+            queue.shift();
+        } else {
+            let curChain = queue[0].chain;
+            let chainParent = queue[0].chainParent;
+            queue.shift();
 
-        let begin = indexOfSha(allUniqueCommits, firstInChain.sha);
-        let end = indexOfSha(allUniqueCommits, curChain[curChain.length-1].sha);
-        curLevel = levels[begin];
-        for (let i = begin; i < end; i++) {
-            curLevel = Math.max(curLevel, levels[i]);
-        }
-        curLevel++;
-        if ("children" in firstInChain && firstInChain.children.length > 1) {
-            let x = firstInChain.children.length - indexOfSha(firstInChain.children, curChain[0].sha);
-            curLevel = Math.max(curLevel, levels[begin] + x);
-        }
+            let begin = indexOfSha(allUniqueCommits, chainParent.sha);
+            let end = indexOfSha(allUniqueCommits, curChain[curChain.length-1].sha);
 
-        for (let i = curChain.length - 1; i >= 0; i--) {
-            let index = indexOfSha(allUniqueCommits, curChain[i].sha);
-            levels[index] = curLevel;
-
-            if ("children" in curChain[i]) {
-                for (let j = curChain[i].children.length - 1; j >= 0 ; j--) {
-                    queue.push({chain: curChain[i].children[j], parent: curChain[i]});
+            curLevel = chooseLevel(indexOfSha(allUniqueCommits, chainParent.sha), end);
+            /*
+            if ("children" in firstInChain && firstInChain.children.length > 1) {
+                let x = firstInChain.children.length - indexOfSha(firstInChain.children, curChain[0].sha);
+                curLevel = Math.max(curLevel, levels[begin] + x);
+            }
+             */
+            addLevel(indexOfSha(allUniqueCommits, chainParent.sha), end + 1, curLevel);
+            for (let i = curChain.length - 1; i >= 0; i--) {
+                let index = indexOfSha(allUniqueCommits, curChain[i].sha);
+                levels[index] = curLevel;
+                if ("mergeCommits" in curChain[i]) {
+                    for (let j = 0; j < curChain[i].mergeCommits.length; j++) {
+                        queue.push({chain: null, chainParent: curChain[i], mergeCommit: curChain[i].mergeCommits[j]});
+                    }
+                }
+                if ("children" in curChain[i]) {
+                    for (let j = curChain[i].children.length - 1; j >= 0 ; j--) {
+                        queue.push({chain: curChain[i].children[j], chainParent: curChain[i]});
+                    }
                 }
             }
+        }
+    }
+
+    // begin and end - indexes
+    function chooseLevel (begin, end, initialLevel = levels[begin]) {
+        const MAX_LEVELS = 1000000;
+        for (let level = initialLevel + 1; level < MAX_LEVELS; level++) {
+            let occupied = false;
+            for (let j = begin + 1; j < end; j++) {
+                if (levelLines[j].has(level)) {
+                    occupied = true;
+                    break;
+                }
+            }
+            if (!occupied) {
+                return level;
+            }
+        }
+    }
+    
+    function addLevel (begin, end, level) {
+        for (let i = begin + 1; i < end; i++) {
+            levelLines[i].add(level);
         }
     }
 
@@ -278,10 +427,13 @@ function createLines () {
         for (let i = 0; i < curChain.length; i++) {
             if ("mergeCommits" in curChain[i]) {
                 for (let j = 0; j < curChain[i].mergeCommits.length; j++) {
-                    curveLines.push({
-                        begin: allUniqueCommits.find(x => x.sha === curChain[i].sha),
-                        end: allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha),
-                    });
+                    let pushObject = {};
+                    pushObject.begin = allUniqueCommits.find(x => x.sha === curChain[i].sha);
+                    pushObject.end = allUniqueCommits.find(x => x.sha === curChain[i].mergeCommits[j].sha);
+                    if ("level" in curChain[i].mergeCommits[j]) {
+                        pushObject.level = curChain[i].mergeCommits[j].level;
+                    }
+                    curveLines.push(pushObject);
                 }
             }
             if ("children" in curChain[i]) {

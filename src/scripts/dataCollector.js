@@ -249,6 +249,8 @@ async function buildGraph () {
                 }
             }
             chain.reverse();
+            allUniqueCommits.find(x => x.sha === chain[chain.length-1].sha).start = false;
+            allUniqueCommits.find(x => x.sha === chain[0].sha).start = true;
             /*
             // specifying branch name
             if (lastBranchN !== i) {
@@ -267,10 +269,10 @@ async function buildGraph () {
                     to.children.push(chain);
                 }
             } else {
+                delete allUniqueCommits.find(x => x.sha === chain[0].sha).start;
                 orderedCommits.push(...chain);
             }
         }
-
     }
 
 
