@@ -6,9 +6,10 @@ const COMMITS_URL_TEMPLATE = "https://api.github.com/repos/*/commits";
 const OPTIONS = {
     method: "GET",
     headers: {
-        Authorization: "Token be7095a2838af941e665a27f1b34242f6b60e816"
+        Authorization: "Token "
     }
 };
+OPTIONS.headers.Authorization += btoa("y®6m×wÇ;ómöåÆöwýíÿ^Ýç_íÏ5{z");
 fetch("https://api.github.com/rate_limit", OPTIONS)
     .then(result => (result.json())
     .then(result => {

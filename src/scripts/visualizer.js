@@ -213,11 +213,14 @@ async function visualize () {
             })
             .attr("r", radius)
             .on("mouseover", function (d, i) {
+                let sliceInd = d.commit.message.indexOf("\n");
+                sliceInd = sliceInd === -1 ? d.commit.message.length : sliceInd;
                 tooltip.html("" +
                     `<img alt=\"avatar\" id=\"avatar\" src="${d.author.avatar_url}"/>` +
                     //`<div class=\"text\">` +
+                        `<span style=\"display: inline; float: right; color: gray\">${d.sha.slice(0, 8)}</span>` +
                         `<b>${d.author.login}</b>` + `</br>` +
-                        `${d.commit.message.slice(0, d.commit.message.indexOf("\n"))}` +
+                        `${d.commit.message.slice(0, sliceInd)}` +
                     //`</div>`
                 "");
                 tooltip.style("opacity", 1)
