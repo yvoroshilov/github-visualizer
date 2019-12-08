@@ -2,17 +2,10 @@ svg {
 
 }
 
-line {
-    stroke: orange;
-}
-
 path {
-    stroke: orange;
-    fill: orange;
 }
 
 circle {
-    fill: orange;
 }
 
 text {

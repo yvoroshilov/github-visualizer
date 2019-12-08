@@ -3,6 +3,31 @@ let levels = [];
 let levelLines = [];
 let straightLines = [];
 let curveLines = [];
+let colors = [
+    "#080808",
+    "#3d9cdc",
+    "#37ce77",
+    "#954fb2",
+    "#f1c71d",
+    "#ea9347",
+    "#46596c",
+    "#e95c4e",
+    "#3f8dc0",
+    "#36c4a8",
+    "#a76dbf",
+    "#f4a62b",
+    "#929d9e",
+    "#4c5b6a",
+    "#da702b",
+    "#eb6a5d",
+    "#a8b5b6",
+    "#c0c5c9",
+    "#44b29d",
+    "#55bf82",
+    "#ce665b",
+    "#3799db",
+    "#2ecc71"
+];
 
 /*
 const MAX_NODES = 30;
@@ -72,6 +97,7 @@ async function visualize () {
             .attr("y1", (d) => getPosY(indexOfSha(allUniqueCommits, d.begin.sha)))
             .attr("x2", (d) => getPosX(indexOfSha(allUniqueCommits, d.end.sha)))
             .attr("y2", (d) => getPosY(indexOfSha(allUniqueCommits, d.end.sha)))
+            .attr("stroke", (d) => pickColor(levels[indexOfSha(allUniqueCommits, d.begin.sha)]))
             .attr("stroke-width", lineWidth);
 
     // drawing curve lines
@@ -95,6 +121,7 @@ async function visualize () {
                         let reversed = levels[beginIndex] > levels[endIndex];
                         return getCurve([beginX, beginY], [endX, endY], reversed);
                     }
+                    /*
                     case 1: {
                         let x1 = getPosX(beginIndex);
                         let y1 = getPosY(beginIndex);
@@ -114,7 +141,9 @@ async function visualize () {
                         let reversed = levels[beginIndex] > levels[endIndex];
                         return getCurve([beginX, beginY], [endX, endY], reversed);
                     }
+                    */
                     case 2: {
+                        let fillColor = pickColor(levels[endIndex]);
                         let x1 = getPosX(beginIndex + 1) - radius / 2 - 2;
                         let y1 = getPosY(endIndex);
                         let x2 = getPosX(endIndex);
@@ -124,6 +153,7 @@ async function visualize () {
                                 .attr("y1", y1)
                                 .attr("x2", x2)
                                 .attr("y2", y2)
+                                .attr("stroke", fillColor)
                                 .attr("stroke-width", lineWidth);
                         let beginX = getPosX(beginIndex) + radius / 2;
                         let beginY = getPosY(beginIndex) - radius / 2;
@@ -134,6 +164,7 @@ async function visualize () {
                         return getCurve([beginX, beginY], [endX, endY], reversed);
                     }
                     case 3: {
+                        let fillColor = pickColor(levels[beginIndex]);
                         let x1 = getPosX(beginIndex + 1) - radius / 2 - 2;
                         let y1 = getPosY(-1, level);
                         let x2 = getPosX(endIndex - 1) + radius / 2 + 2;
@@ -143,6 +174,7 @@ async function visualize () {
                                 .attr("y1", y1)
                                 .attr("x2", x2)
                                 .attr("y2", y2)
+                                .attr("stroke", fillColor)
                                 .attr("stroke-width", lineWidth);
                         let beginX1 = getPosX(beginIndex) + radius / 2;
                         let beginY1 = getPosY(beginIndex) - radius / 2;
@@ -157,10 +189,40 @@ async function visualize () {
                         let reversed2 = level > levels[endIndex];
                         g.append("path")
                                 .attr("d", getCurve([beginX1, beginY1], [endX1, endY1], reversed1))
+                                .attr("fill", fillColor)
                                 .attr("stroke-width", 0);
+
                         return getCurve([beginX2, beginY2], [endX2, endY2], reversed2);
                     }
+                    default: {
+                        throw new Error("case 1 generated");
+                    }
                 }
+            })
+            .attr("fill", function (d) {
+                let beginIndex = indexOfSha(allUniqueCommits, d.begin.sha);
+                let endIndex = indexOfSha(allUniqueCommits, d.end.sha);
+                let level = d.level;
+                let lineStyle = getLineStyle(beginIndex, endIndex);
+                if ("level" in d) lineStyle = 3;
+
+                let reversed = levels[beginIndex] > levels[endIndex];
+
+                if (levels[beginIndex] === -1 || levels[endIndex] === -1) return pickColor(1);
+                if (lineStyle === 0 || lineStyle === 2) {
+                    if (reversed) {
+                        return pickColor(levels[beginIndex]);
+                    } else {
+                        if ("mergeCommits" in allUniqueCommits[beginIndex] &&
+                            allUniqueCommits[beginIndex].mergeCommits.find(x => x.sha === allUniqueCommits[endIndex].sha) !== undefined) {
+                            return pickColor(levels[beginIndex]);
+                        }
+                        return pickColor(levels[endIndex]);
+                    }
+                } else {
+                    return pickColor(levels[beginIndex]);
+                }
+
             })
             .attr("stroke-width", 0);
 
@@ -171,6 +233,13 @@ async function visualize () {
         .enter().append("circle")
             .attr("cx", (d, i) => getPosX(i))
             .attr("cy", (d, i) => getPosY(i))
+            .attr("fill", (d, i) => {
+                if (levels[i] === -1) {
+                    return pickColor(1);
+                } else {
+                    return pickColor(levels[i]);
+                }
+            })
             .attr("r", radius);
     g.selectAll("text")
             .data(allUniqueCommits)
@@ -210,6 +279,11 @@ async function visualize () {
         return 3;
     }
 
+    function pickColor (level) {
+        let nul = level === 0;
+        level %= colors.length;
+        return level === 0 && !nul ? colors[1] : colors[level];
+    }
 }
 
 // start and end - arrays [x, y]
