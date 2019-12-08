@@ -62,17 +62,21 @@ let transformY = 0;
 async function visualize () {
     clearVisualData();
     await buildGraph();
+    document.getElementById("visualizingField").style.cursor = "move";
+
     setLevels();
     createLines();
     computeBaseValues();
     const svg = d3.select("svg");
     const g = svg.append("g");
+
     console.log(document.getElementsByTagName("svg")[0].getBoundingClientRect());
     console.log(levels);
     console.log(straightLines);
     console.log(curveLines);
     console.log(levelLines);
     console.log(allUniqueCommits);
+
     svg.attr("viewBox", [0, 0, baseWidth, baseHeight]);
 
     // drawing straight lines

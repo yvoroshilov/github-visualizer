@@ -43,16 +43,19 @@ input, select {
 }
 
 #header {
+    display: table-cell;
     flex: 0 1 55px;
     margin: 0px;
     background-color: #115163;
     font-size: 39px;
+    white-space: nowrap;
+    word-wrap: unset;
+    flex-wrap: nowrap;
 }
 
 #logoAndTitle {
-    display: inline-block;
-    margin-left: 50%;
-    transform: translateX(-50%);
+    display: table;
+    margin: 0 auto;
 }
 
 #logo {
@@ -67,11 +70,14 @@ input, select {
 }
 
 #statsBox {
-    flex: 0 1 70px;
+    flex: 0 0 70px;
     display: flex;
     flex-flow: row wrap;
     position: relative;
-    //background-color: red;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-y: hidden;
+    overflow-x: hidden;
 }
 
 #inpRepo {

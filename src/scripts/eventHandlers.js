@@ -2,13 +2,24 @@ const FETCH_DATA_STR = "Fetch data", VISUALIZE_STR = "Visualize!";
 const BTN = document.getElementById("btnRepo");
 const INPUT_REPO = document.getElementById("inpRepo");
 const BRANCH_SELECTOR = document.getElementById("branchSel");
+const STATS_BOX = document.getElementById("statsBox");
 
 BTN.addEventListener("click", fetchPressed);
 BRANCH_SELECTOR.addEventListener("change", branchChanged);
 INPUT_REPO.addEventListener("keypress", enterPressed);
+window.onresize = windowResized;
 
+function windowResized () {
+    if (STATS_BOX.scrollWidth > STATS_BOX.clientWidth) {
+        STATS_BOX.style.flex = "0 0 87px";
+        STATS_BOX.style.overflowX = "auto";
+    } else {
+        STATS_BOX.style.flex = "0 0 70px";
+        STATS_BOX.style.overflowX = "hidden";
+    }
+}
 
-async function enterPressed (e) {
+function enterPressed (e) {
     if (e.key === "Enter") {
         BTN.click();
     }
