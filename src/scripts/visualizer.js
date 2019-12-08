@@ -63,7 +63,6 @@ async function visualize () {
      svg.append("path")
         .attr("d", getEdge([150, 150], [190, 100]));
      */
-    /*
     // drawing straight lines
     g.selectAll("line")
             .data(straightLines)
@@ -75,8 +74,6 @@ async function visualize () {
             .attr("y2", (d) => getPosY(indexOfSha(allUniqueCommits, d.end.sha)))
             .attr("stroke-width", lineWidth);
 
-     */
-
     // drawing curve lines
     g.selectAll("path")
             .data(curveLines)
@@ -86,16 +83,14 @@ async function visualize () {
                 let beginIndex = indexOfSha(allUniqueCommits, d.begin.sha);
                 let endIndex = indexOfSha(allUniqueCommits, d.end.sha);
                 let level = d.level;
-                let beginX;
-                let beginY;
-                let endX;
-                let endY;
-                switch (getLineStyle(beginIndex, endIndex)) {
+                let lineStyle = getLineStyle(beginIndex, endIndex);
+                if ("level" in d) lineStyle = 3;
+                switch (lineStyle) {
                     case 0: {
-                        beginX = getPosX(beginIndex) + radius / 2;
-                        beginY = getPosY(beginIndex) - radius / 2;
-                        endX = getPosX(endIndex) - radius / 2;
-                        endY = getPosY(endIndex) - radius / 2;
+                        let beginX = getPosX(beginIndex) + radius / 2;
+                        let beginY = getPosY(beginIndex) - radius / 2;
+                        let endX = getPosX(beginIndex + 1) - radius / 2;
+                        let endY = getPosY(endIndex) - radius / 2;
 
                         let reversed = levels[beginIndex] > levels[endIndex];
                         return getCurve([beginX, beginY], [endX, endY], reversed);
@@ -111,16 +106,16 @@ async function visualize () {
                                 .attr("x2", x2)
                                 .attr("y2", y2)
                                 .attr("stroke-width", lineWidth);
-                        beginX = x2 + radius / 2;
-                        beginY = y2 - radius / 2;
-                        endX = getPosX(endIndex) - radius / 2;
-                        endY = getPosY(endIndex) - radius / 2;
+                        let beginX = x2 + radius / 2;
+                        let beginY = y2 - radius / 2;
+                        let endX = getPosX(endIndex) - radius / 2;
+                        let endY = getPosY(endIndex) - radius / 2;
 
                         let reversed = levels[beginIndex] > levels[endIndex];
                         return getCurve([beginX, beginY], [endX, endY], reversed);
                     }
                     case 2: {
-                        let x1 = getPosX(beginIndex + 1);
+                        let x1 = getPosX(beginIndex + 1) - radius / 2 - 2;
                         let y1 = getPosY(endIndex);
                         let x2 = getPosX(endIndex);
                         let y2 = getPosY(endIndex);
@@ -130,18 +125,18 @@ async function visualize () {
                                 .attr("x2", x2)
                                 .attr("y2", y2)
                                 .attr("stroke-width", lineWidth);
-                        beginX = getPosX(beginIndex) + radius / 2;
-                        beginY = getPosY(beginIndex) - radius / 2;
-                        endX = getPosX(beginIndex + 1) - radius / 2;
-                        endY = getPosY(endIndex) - radius / 2;
+                        let beginX = getPosX(beginIndex) + radius / 2;
+                        let beginY = getPosY(beginIndex) - radius / 2;
+                        let endX = getPosX(beginIndex + 1) - radius / 2;
+                        let endY = getPosY(endIndex) - radius / 2;
 
                         let reversed = levels[beginIndex] > levels[endIndex];
                         return getCurve([beginX, beginY], [endX, endY], reversed);
                     }
                     case 3: {
-                        let x1 = getPosX(beginIndex + 1);
+                        let x1 = getPosX(beginIndex + 1) - radius / 2 - 2;
                         let y1 = getPosY(-1, level);
-                        let x2 = getPosX(endIndex - 1);
+                        let x2 = getPosX(endIndex - 1) + radius / 2 + 2;
                         let y2 = getPosY(-1, level);
                         g.append("line")
                                 .attr("x1", x1)
@@ -153,23 +148,17 @@ async function visualize () {
                         let beginY1 = getPosY(beginIndex) - radius / 2;
                         let endX1 = getPosX(beginIndex + 1) - radius / 2;
                         let endY1 = getPosY(-1, level) - radius / 2;
-                        let beginX2 = x2 + radius / 2;
+                        let beginX2 = x2 - 2;
                         let beginY2 = y2 - radius / 2;
                         let endX2 = getPosX(endIndex) - radius / 2;
                         let endY2 = getPosY(endIndex) - radius / 2;
 
-                        let reversed = levels[beginIndex] > levels[endIndex];
-                        if (reversed) {
-                            g.append("path")
-                                    .attr("d", getCurve([beginX1, beginY1], [endX1, endY1], reversed))
-                                    .attr("stroke-width", 0);
-                            return getCurve([beginX2, beginY2], [endX2, endY2], reversed);
-                        } else {
-                            g.append("path")
-                                    .attr("d", getCurve([beginX1, beginY1], [endX1, endY1]))
-                                    .attr("stroke-width", 0);
-                            return getCurve([beginX2, beginY2], [endX2, endY2]);
-                        }
+                        let reversed1 = level < levels[beginIndex];
+                        let reversed2 = level > levels[endIndex];
+                        g.append("path")
+                                .attr("d", getCurve([beginX1, beginY1], [endX1, endY1], reversed1))
+                                .attr("stroke-width", 0);
+                        return getCurve([beginX2, beginY2], [endX2, endY2], reversed2);
                     }
                 }
             })
@@ -211,7 +200,7 @@ async function visualize () {
     function getLineStyle (beginIndex, endIndex) {
         let begin = allUniqueCommits[beginIndex];
         let end = allUniqueCommits[endIndex];
-        if (endIndex - beginIndex === 1) return 0;
+        if (Math.abs(endIndex - beginIndex) === 1) return 0;
         if ("start" in end && end.start === true) {
             return 2;
         }
