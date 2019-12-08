@@ -3,12 +3,20 @@ const BTN = document.getElementById("btnRepo");
 const INPUT_REPO = document.getElementById("inpRepo");
 const BRANCH_SELECTOR = document.getElementById("branchSel");
 
-BTN.addEventListener("click", btnRepoPressed);
+BTN.addEventListener("click", fetchPressed);
 BRANCH_SELECTOR.addEventListener("change", branchChanged);
+INPUT_REPO.addEventListener("keypress", enterPressed);
 
 
-async function btnRepoPressed () {
+async function enterPressed (e) {
+    if (e.key === "Enter") {
+        BTN.click();
+    }
+}
+
+async function fetchPressed () {
     clearStats();
+    clearCollectedData();
     let decomposedInput;
     try {
         decomposedInput = processUrl();
@@ -21,7 +29,7 @@ async function btnRepoPressed () {
     //TODO Make "fetching" animation (e.g. three dots blinking)
     await startFetching(decomposedInput);
     BTN.innerHTML = VISUALIZE_STR;
-    BTN.removeEventListener("click", btnRepoPressed);
+    BTN.removeEventListener("click", fetchPressed);
     BTN.addEventListener("click", visualize);
     INPUT_REPO.addEventListener("input", inputChanged);
 }
@@ -30,7 +38,7 @@ function inputChanged() {
     BTN.innerHTML = FETCH_DATA_STR;
     INPUT_REPO.removeEventListener("input", inputChanged);
     BTN.removeEventListener("click", visualize);
-    BTN.addEventListener("click", btnRepoPressed);
+    BTN.addEventListener("click", fetchPressed);
 }
 
 function branchChanged() {

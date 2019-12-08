@@ -19,9 +19,9 @@ fetch("https://api.github.com/rate_limit", OPTIONS)
 
 // --------COLLECTED DATA--------
 let maxCommits = 0;
-let branches;
-let defaultBranch;
-let usrAndRepo;
+let branches = [];
+let defaultBranch = {};
+let usrAndRepo = {};
 let allUniqueCommits = [];
 let orderedCommits = [];
 // --------COLLECTED DATA--------
@@ -110,16 +110,6 @@ function Paginator (items) {
     this.items = items;
 }
 
-/*
-async function fetchSmth () {
-    const gHApiUrl = "https://api.github.com";
-    const response = await fetch(gHApiUrl);
-    const result = await response.json();
-    console.log(result);
-    debugger;
-}
-*/
-
 async function startFetching (decomposedInput) {
     usrAndRepo = decomposedInput;
 
@@ -136,7 +126,6 @@ async function startFetching (decomposedInput) {
 
     await setRepoStats(repoInfo);
 }
-
 
 async function setRepoStats (repoInfo) {
     const cells = document.getElementById("stats").getElementsByTagName("span");
@@ -346,6 +335,14 @@ async function buildGraph () {
     console.log(orderedCommits);
 }
 
+function clearCollectedData () {
+    maxCommits = 0;
+    branches = [];
+    defaultBranch = {};
+    usrAndRepo = {};
+    allUniqueCommits = [];
+    orderedCommits = [];
+}
 
 /*
     auxilary

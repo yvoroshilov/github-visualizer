@@ -29,16 +29,6 @@ let colors = [
     "#2ecc71"
 ];
 
-/*
-const MAX_NODES = 30;
-const MAX_BRANCHES = 10;
-const BASE_RADIUS_MAX = 80;
-const BASE_RADIUS_MIN = 30;
-const BASE_DISTANCE_HORIZONTAL_MAX = 330;
-const BASE_DISTANCE_VERTICAL_MIN = 130;
-*/
-// with no padding included
-//let width = (radius * 2 + (distanceHorizontal - radius * 2)) * maxCommits > svgSize.width ? (radius * 2 + (distanceHorizontal - radius * 2)) * maxCommits : svgSize.width;
 let baseWidth;
 let baseHeight;
 
@@ -67,6 +57,7 @@ function computeBaseValues () {
 }
 
 async function visualize () {
+    clearVisualData();
     await buildGraph();
     setLevels();
     createLines();
@@ -505,4 +496,12 @@ function createLines () {
 
 function indexOfSha (arr, sha) {
     return arr.indexOf(arr.find(x => x.sha === sha))
+}
+
+function clearVisualData () {
+    levels = [];
+    levelLines = [];
+    straightLines = [];
+    curveLines = [];
+    d3.select("svg").selectAll("*").remove();
 }
