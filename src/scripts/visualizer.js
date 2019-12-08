@@ -56,6 +56,9 @@ function computeBaseValues () {
     lineWidth = 30;
 }
 
+let zoomScale = 1;
+let transformX = 0;
+let transformY = 0;
 async function visualize () {
     clearVisualData();
     await buildGraph();
@@ -71,14 +74,7 @@ async function visualize () {
     console.log(levelLines);
     console.log(allUniqueCommits);
     svg.attr("viewBox", [0, 0, baseWidth, baseHeight]);
-    svg.call(d3.zoom()
-            .extent([[0, 0], [baseWidth, baseHeight]])
-            .scaleExtent([0.005, 8])
-            .on("zoom", () => g.attr("transform", d3.event.transform)));
-    /*
-     svg.append("path")
-        .attr("d", getEdge([150, 150], [190, 100]));
-     */
+
     // drawing straight lines
     g.selectAll("line")
             .data(straightLines)
@@ -196,10 +192,16 @@ async function visualize () {
             .attr("stroke-width", 0);
 
 
+    let tooltip = d3.select("#visualizingField").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
     // drawing nodes
-    g.selectAll("circle")
+    g.selectAll("a")
             .data(allUniqueCommits)
-        .enter().append("circle")
+        .enter().append("a")
+            .attr("xlink:href", (d) => d.html_url)
+            .attr("target", "_blank")
+        .append("circle")
             .attr("cx", (d, i) => getPosX(i))
             .attr("cy", (d, i) => getPosY(i))
             .attr("fill", (d, i) => {
@@ -209,13 +211,43 @@ async function visualize () {
                     return pickColor(levels[i]);
                 }
             })
-            .attr("r", radius);
+            .attr("r", radius)
+            .on("mouseover", function (d, i) {
+                tooltip.html("" +
+                    `<img alt=\"avatar\" id=\"avatar\" src="${d.author.avatar_url}"/>` +
+                    //`<div class=\"text\">` +
+                        `<b>${d.author.login}</b>` + `</br>` +
+                        `${d.commit.message.slice(0, d.commit.message.indexOf("\n"))}` +
+                    //`</div>`
+                "");
+                tooltip.style("opacity", 1)
+                        .style("left", (getPosX(i) * zoomScale + transformX) + "px")
+                        .style("top", (getPosY(i) * zoomScale + transformY) + "px")
+                        .style("margin", (zoomScale > 1 ? radius : radius * zoomScale) + "px");
+            })
+            .on("mouseout", function (d) {
+                tooltip.style("opacity", 0)
+
+            });
+    svg.call(d3.zoom()
+            .extent([[0, 0], [baseWidth, baseHeight]])
+            .scaleExtent([0.005, 8])
+            .on("zoom", function () {
+                g.attr("transform", d3.event.transform);
+                zoomScale = d3.event.transform.k;
+                transformX = d3.event.transform.x;
+                transformY = d3.event.transform.y;
+            })
+    );
+    /*
     g.selectAll("text")
             .data(allUniqueCommits)
         .enter().append("text")
             .attr("x", (d, i) => getPosX(i) - radius)
             .attr("y", (d, i) => getPosY(i))
             .text((d, i) => "(" + i + ")" + d.sha.slice(0, 8));
+
+     */
 
 
 

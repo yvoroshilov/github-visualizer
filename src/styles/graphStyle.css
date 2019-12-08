@@ -1,13 +1,37 @@
-svg {
-
-}
-
-path {
+text {
+    fill: white;
 }
 
 circle {
 }
 
-text {
-    fill: white;
+.tooltip {
+    display: inline-block;
+    position: absolute;
+    min-width: 300px;
+    max-width: 380px;
+    height: 50px;
+    padding: 5px;
+
+    color: black;
+    font: 13px sans-serif;
+    text-align: left;
+
+    background-color: white;
+    border: 1px solid grey;
+    border-radius: 4px;
+}
+
+.text {
+    display: inline-block;
+    min-width: 240px;
+    padding-top: 6px;
+    color: black;
+}
+
+#avatar {
+    float: left;
+    height: 50px;
+    width: 50px;
+    margin-right: 5px;
 }
