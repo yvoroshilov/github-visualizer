@@ -207,6 +207,7 @@ async function visualize () {
         .append("circle")
             .attr("cx", (d, i) => getPosX(i))
             .attr("cy", (d, i) => getPosY(i))
+            .attr("r", radius)
             .attr("fill", (d, i) => {
                 if (levels[i] === -1) {
                     return pickColor(1);
@@ -214,7 +215,6 @@ async function visualize () {
                     return pickColor(levels[i]);
                 }
             })
-            .attr("r", radius)
             .on("mouseover", function (d, i) {
                 let sliceInd = d.commit.message.indexOf("\n");
                 sliceInd = sliceInd === -1 ? d.commit.message.length : sliceInd;
@@ -230,10 +230,23 @@ async function visualize () {
                         .style("left", (getPosX(i) * zoomScale + transformX) + "px")
                         .style("top", (getPosY(i) * zoomScale + transformY) + "px")
                         .style("margin", (zoomScale > 1 ? radius : radius * zoomScale) + "px");
+                /*
+                g.append("circle")
+                        .attr("class", "nodeBorder")
+                        .attr("cx", () => getPosX(i))
+                        .attr("cy", () => getPosY(i))
+                        .attr("r", radius)
+                        .attr("storke-width", "4")
+                        .attr("stroke", "red")
+                        .attr("fill", "transparent");
+                 */
+
+
+
             })
             .on("mouseout", function (d) {
-                tooltip.style("opacity", 0)
-
+                tooltip.style("opacity", 0);
+                //g.select(".nodeBorder").remove();
             });
     svg.call(d3.zoom()
             .extent([[0, 0], [baseWidth, baseHeight]])
