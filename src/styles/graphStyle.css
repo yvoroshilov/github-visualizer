@@ -5,6 +5,12 @@ text {
 circle {
 }
 
+circle:hover {
+    stroke: #00c7ec;
+    stroke-width: 5px;
+    stroke-linejoin: round;
+}
+
 .tooltip {
     display: inline-block;
     position: absolute;

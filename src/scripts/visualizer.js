@@ -207,6 +207,7 @@ async function visualize () {
         .append("circle")
             .attr("cx", (d, i) => getPosX(i))
             .attr("cy", (d, i) => getPosY(i))
+            .attr("r", radius)
             .attr("fill", (d, i) => {
                 if (levels[i] === -1) {
                     return pickColor(1);
@@ -214,15 +215,15 @@ async function visualize () {
                     return pickColor(levels[i]);
                 }
             })
-            .attr("r", radius)
             .on("mouseover", function (d, i) {
                 let sliceInd = d.commit.message.indexOf("\n");
                 sliceInd = sliceInd === -1 ? d.commit.message.length : sliceInd;
+                let avatar_url = d.author !== null ? d.author.avatar_url : "#";
                 tooltip.html("" +
-                    `<img alt=\"avatar\" id=\"avatar\" src="${d.author.avatar_url}"/>` +
+                    `<img alt=\"avatar\" id=\"avatar\" src="${avatar_url}"/>` +
                     //`<div class=\"text\">` +
                         `<span style=\"display: inline; float: right; color: gray\">${d.sha.slice(0, 8)}</span>` +
-                        `<b>${d.author.login}</b>` + `</br>` +
+                        `<b>${d.commit.author.name}</b>` + `</br>` +
                         `${d.commit.message.slice(0, sliceInd)}` +
                     //`</div>`
                 "");
@@ -232,8 +233,8 @@ async function visualize () {
                         .style("margin", (zoomScale > 1 ? radius : radius * zoomScale) + "px");
             })
             .on("mouseout", function (d) {
-                tooltip.style("opacity", 0)
-
+                tooltip.style("opacity", 0);
+                //g.select(".nodeBorder").remove();
             });
     svg.call(d3.zoom()
             .extent([[0, 0], [baseWidth, baseHeight]])
