@@ -62,7 +62,6 @@ let transformY = 0;
 async function visualize () {
     clearVisualData();
     await buildGraph();
-    document.getElementById("visualizingField").style.cursor = "move";
 
     setLevels();
     createLines();

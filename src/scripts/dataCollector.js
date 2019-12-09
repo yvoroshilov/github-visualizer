@@ -319,20 +319,6 @@ async function buildGraph () {
         rec(graph, item);
         return found;
     }
-    /*
-    function markBranch (start, branch) {
-
-            for (let j = 0; j < chain.length; j++) {
-                if ("belongsTo" in chain[j]) {
-                    chain[j].belongsTo.push(brsDefaultFirst[i]);
-                } else {
-                    chain[j].belongsTo = [brsDefaultFirst[i]];
-                }
-            }
-    }
-
-
-     */
     console.log(orderedCommits);
 }
 
