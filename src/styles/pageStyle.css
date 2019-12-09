@@ -81,7 +81,7 @@ input, select {
     border: 1px solid #00a9cd;
     margin: 4px 8px;
 
-    font-size: 14.5px;
+    font-size: 14px;
 
     position: relative;
     flex-wrap: nowrap;
@@ -149,7 +149,7 @@ input, select {
 }
 
 #stats td {
-    padding: 5px 4px;
+    padding: 5px 20px;
     //border: 1px solid white;
 }
 

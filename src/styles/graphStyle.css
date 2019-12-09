@@ -6,7 +6,7 @@ circle {
 }
 
 circle:hover {
-    stroke: #00c7ec;
+    stroke: #00a9cd;
     stroke-width: 5px;
     stroke-linejoin: round;
 }
@@ -19,12 +19,12 @@ circle:hover {
     height: 50px;
     padding: 5px;
 
-    color: black;
+    color: #ebebeb;
     font: 13px sans-serif;
     text-align: left;
 
-    background-color: white;
-    border: 1px solid grey;
+    background-color: #202020;
+    border: 1px solid #00a9cd;
     border-radius: 4px;
 }
 

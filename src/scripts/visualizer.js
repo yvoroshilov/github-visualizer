@@ -4,7 +4,7 @@ let levelLines = [];
 let straightLines = [];
 let curveLines = [];
 let colors = [
-    "#080808",
+    "#ffffff",
     "#3d9cdc",
     "#37ce77",
     "#954fb2",
