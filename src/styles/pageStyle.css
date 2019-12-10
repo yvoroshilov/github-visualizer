@@ -288,7 +288,7 @@ input, select {
 
 @keyframes blink {
     50% {
-        color: transparent
+        color: transparent;
     }
 }
 .processingDot {

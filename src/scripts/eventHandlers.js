@@ -28,7 +28,14 @@ function enterPressed (e) {
 
 async function fetchPressed () {
     BTN.removeEventListener("click", fetchPressed);
-    updateProgress("", 0, 0);
+    await updateProgress("", -1, -1);
+    BTN.innerHTML = "" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+    "";
+
+
 
     let decomposedInput;
     try {
@@ -43,7 +50,7 @@ async function fetchPressed () {
         BTN.addEventListener("click", fetchPressed);
         return
     }
-    clearStats();
+    clearAll();
     clearCollectedData();
 
     //TODO Make "fetching" animation (e.g. three dots blinking)
@@ -96,8 +103,11 @@ function processUrl () {
     return decomposedUrl;
 }
 
-function clearStats () {
+function clearAll () {
+    clearVisualData();
+
     document.getElementsByClassName("hint")[0].style.visibility = "hidden";
+
     const cells = document.getElementById("stats").getElementsByTagName("span");
     for (let cell of cells) {
         cell.innerHTML = "";

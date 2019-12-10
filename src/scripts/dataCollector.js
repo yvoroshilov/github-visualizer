@@ -154,7 +154,7 @@ async function setRepoStats (repoInfo) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
         }
-        await updateProgress("Branches", i + 1, branches.length);
+        await updateProgress("branches", i + 1, branches.length);
     }
     setBranchStats(defaultBranch);
     await updateProgress("", -1, -1);
@@ -267,12 +267,12 @@ async function buildGraph () {
         let allCommits = [];
         let curPage = await paginator.items.clone().json();
         allCommits.push(...curPage);
-        await updateProgress(`Commits for ${curBranchName}`, allCommits.length, curTotalCommits);
+        await updateProgress(`commits for ${curBranchName}`, allCommits.length, curTotalCommits);
         while (paginator.links.next !== "") {
             await paginator.next();
             curPage = await paginator.items.clone().json();
             allCommits.push(...curPage);
-            await updateProgress(`Commits for ${curBranchName}`, allCommits.length, curTotalCommits);
+            await updateProgress(`commits for ${curBranchName}`, allCommits.length, curTotalCommits);
         }
         return allCommits;
     }
@@ -359,7 +359,7 @@ async function updateProgress (elements, cur, max) {
 
 
     function updateCounter () {
-        progressBox.childNodes[0].nodeValue = `${elements}: ${cur}/${max}`;
+        progressBox.childNodes[0].nodeValue = `Fetching ${elements}: ${cur}/${max}`;
         progressBar.style.width = `${cur / max * 100}%`;
     }
 

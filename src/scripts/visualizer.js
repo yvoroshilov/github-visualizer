@@ -60,6 +60,12 @@ let zoomScale = 1;
 let transformX = 0;
 let transformY = 0;
 async function visualize () {
+    BTN.innerHTML = "" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+    "";
+
     clearVisualData();
     await buildGraph();
 
