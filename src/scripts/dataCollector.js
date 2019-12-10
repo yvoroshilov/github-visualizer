@@ -9,7 +9,7 @@ const OPTIONS = {
         Authorization: "Token "
     }
 };
-OPTIONS.headers.Authorization += btoa("y®6m×wÇ;ómöåÆöwýíÿ^Ýç_íÏ5{z");
+OPTIONS.headers.Authorization += btoa("oFÝ_knµõöµsN8ãmZïÞ_ãÝwM¼u¾{");
 fetch("https://api.github.com/rate_limit", OPTIONS)
     .then(result => (result.json())
     .then(result => {
@@ -241,15 +241,6 @@ async function buildGraph () {
             chain.reverse();
             allUniqueCommits.find(x => x.sha === chain[chain.length-1].sha).start = false;
             allUniqueCommits.find(x => x.sha === chain[0].sha).start = true;
-            /*
-            // specifying branch name
-            if (lastBranchN !== i) {
-                chain[0]
-                lastB
-                ranchN = i;
-            }
-
-             */
             if (curParent === undefined) continue;
             if (orderedCommits.length !== 1) {
                 let to = graphSearch(orderedCommits, curParent);

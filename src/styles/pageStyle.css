@@ -156,6 +156,7 @@ input, select {
 }
 
 #visualizingBox {
+    position: relative;
     flex: 1;
     border: 1px solid #00a9cd;
     margin: 4px 8px;
@@ -184,7 +185,6 @@ input, select {
     font-size: 10px;
     text-align: center;
 }
-
 
 #warningTooltip {
     visibility: hidden;
@@ -274,4 +274,14 @@ input, select {
     100% {
         visibility: hidden;
     }
+}
+
+#hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    color: dimgrey;
+    user-select: none;
 }
