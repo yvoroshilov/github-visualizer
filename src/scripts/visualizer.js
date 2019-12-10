@@ -292,6 +292,7 @@ async function visualize () {
         level %= colors.length;
         return level === 0 && !nul ? colors[1] : colors[level];
     }
+    BTN.removeEventListener("click", visualize);
 }
 
 // start and end - arrays [x, y]
@@ -542,5 +543,23 @@ function clearVisualData () {
     levelLines = [];
     straightLines = [];
     curveLines = [];
-    d3.select("svg").selectAll("*").remove();
+    baseWidth = 0;
+    baseHeight = 0;
+    radius = 0;
+    distanceHorizontal = 0;
+    distanceVertical = 0;
+    initialPosX = 0;
+    initialPosY = 0;
+    lineWidth = 0;
+    zoomScale = 1;
+    transformX = 0;
+    transformY = 0;
+
+    let box = d3.select("#visualizingBox").selectAll("*").remove();
+    d3.select("#visualizingBox")
+        .append("div")
+            .attr("id", "visualizingField")
+        .append("svg")
+            .attr("height", "100%")
+            .attr("width", "100%");
 }

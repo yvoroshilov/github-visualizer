@@ -3,11 +3,24 @@ const BTN = document.getElementById("btnRepo");
 const INPUT_REPO = document.getElementById("inpRepo");
 const BRANCH_SELECTOR = document.getElementById("branchSel");
 const STATS_BOX = document.getElementById("statsBox");
+const WARNING_TOOLTIP = document.getElementById("warningTooltip");
 
 BTN.addEventListener("click", fetchPressed);
 BRANCH_SELECTOR.addEventListener("change", branchChanged);
 INPUT_REPO.addEventListener("keypress", enterPressed);
+INPUT_REPO.addEventListener("mouseover", tmpCallback1);
+INPUT_REPO.addEventListener("mouseout", tmpCallback2);
 window.onresize = windowResized;
+
+function tmpCallback1 () {
+    WARNING_TOOLTIP.style.opacity = "1";
+    WARNING_TOOLTIP.style.visibility = "visible";
+}
+
+function tmpCallback2 () {
+    WARNING_TOOLTIP.style.opacity = "0";
+    WARNING_TOOLTIP.style.visibility = "hidden";
+}
 
 function windowResized () {
     if (STATS_BOX.scrollWidth > STATS_BOX.clientWidth) {
@@ -26,6 +39,7 @@ function enterPressed (e) {
 }
 
 async function fetchPressed () {
+    BTN.removeEventListener("click", fetchPressed);
     clearStats();
     clearCollectedData();
     let decomposedInput;
@@ -40,7 +54,6 @@ async function fetchPressed () {
     //TODO Make "fetching" animation (e.g. three dots blinking)
     await startFetching(decomposedInput);
     BTN.innerHTML = VISUALIZE_STR;
-    BTN.removeEventListener("click", fetchPressed);
     BTN.addEventListener("click", visualize);
     INPUT_REPO.addEventListener("input", inputChanged);
 }
@@ -48,7 +61,6 @@ async function fetchPressed () {
 function inputChanged() {
     BTN.innerHTML = FETCH_DATA_STR;
     INPUT_REPO.removeEventListener("input", inputChanged);
-    BTN.removeEventListener("click", visualize);
     BTN.addEventListener("click", fetchPressed);
 }
 
