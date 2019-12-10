@@ -187,14 +187,14 @@ input, select {
 
 
 #warningTooltip {
-    visibility: visible;
+    visibility: hidden;
     position: absolute;
     left: 26px;
-    top: 38px;
+    top: 34px;
 
     width: 120px;
     height: 29px;
-    padding: 1px;
+    padding: 1px 1px 4px;
 
     background-color: #202020;
     border: 1px solid red;
@@ -204,13 +204,12 @@ input, select {
     font-size: 10px;
     text-align: center;
 
-    opacity: 1;
-    transition: opacity 1s;
+    opacity: 0;
 }
 
 #warningTooltip:before {
     position: absolute;
-    top: 51px;
+    top: 54px;
     left: 65px;
     transform: rotate(45deg);
 
@@ -227,11 +226,13 @@ input, select {
     color: #ebebeb;
     font-size: 13px;
     content: "";
+
+    z-index: -1;
 }
 
 #warningTooltip:after {
     position: absolute;
-    top: 50px;
+    top: 53px;
     left: 65px;
     transform: rotate(45deg);
 
@@ -246,4 +247,31 @@ input, select {
     background-color: #202020;
 
     content: "";
+}
+
+.wrap {
+    z-index: 1;
+}
+
+.animate {
+    animation: 3s linear opacityOnOff;
+}
+
+@keyframes opacityOnOff {
+    0% {
+        visibility: visible;
+        opacity: 0;
+    }
+    30%{
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    99% {
+        opacity: 0;
+    }
+    100% {
+        visibility: hidden;
+    }
 }

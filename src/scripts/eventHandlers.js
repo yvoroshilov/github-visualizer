@@ -8,19 +8,7 @@ const WARNING_TOOLTIP = document.getElementById("warningTooltip");
 BTN.addEventListener("click", fetchPressed);
 BRANCH_SELECTOR.addEventListener("change", branchChanged);
 INPUT_REPO.addEventListener("keypress", enterPressed);
-INPUT_REPO.addEventListener("mouseover", tmpCallback1);
-INPUT_REPO.addEventListener("mouseout", tmpCallback2);
 window.onresize = windowResized;
-
-function tmpCallback1 () {
-    WARNING_TOOLTIP.style.opacity = "1";
-    WARNING_TOOLTIP.style.visibility = "visible";
-}
-
-function tmpCallback2 () {
-    WARNING_TOOLTIP.style.opacity = "0";
-    WARNING_TOOLTIP.style.visibility = "hidden";
-}
 
 function windowResized () {
     if (STATS_BOX.scrollWidth > STATS_BOX.clientWidth) {
@@ -40,16 +28,21 @@ function enterPressed (e) {
 
 async function fetchPressed () {
     BTN.removeEventListener("click", fetchPressed);
-    clearStats();
-    clearCollectedData();
     let decomposedInput;
     try {
         decomposedInput = processUrl();
     } catch (e) {
-        console.log(e);
-        debugger;
-        return;
+        WARNING_TOOLTIP.innerText = e.message;
+
+        WARNING_TOOLTIP.classList.remove("animate");
+        //reflow triggering
+        void WARNING_TOOLTIP.offsetWidth;
+        WARNING_TOOLTIP.classList.add("animate");
+        BTN.addEventListener("click", fetchPressed);
+        return
     }
+    clearStats();
+    clearCollectedData();
 
     //TODO Make "fetching" animation (e.g. three dots blinking)
     await startFetching(decomposedInput);
@@ -72,16 +65,26 @@ function branchChanged() {
 }
 
 function processUrl () {
-    const repoUrl = INPUT_REPO.value;
+    let repoUrl = INPUT_REPO.value;
+    const BASE_LENGTH = 19 + 1;
+    const BAD_URL_ERR = new Error("Bad URL has been entered!");
+    try {
+        if (repoUrl[repoUrl.length-1] === '/') repoUrl = repoUrl.substr(0, repoUrl.length-1);
+        if (repoUrl.substr(0, 8) !== "https://") repoUrl = "https://" + repoUrl;
+    } catch {
+        throw BAD_URL_ERR;
+    }
+
     let decomposedUrl = repoUrl.split("/");
-    if (decomposedUrl[0] === "" && decomposedUrl.length === 1) {
-        throw new Error("You haven't entered anything!");
+
+    if (repoUrl <= BASE_LENGTH) {
+        throw BAD_URL_ERR;
     } else if (
         decomposedUrl[0] !== "https:" ||
         decomposedUrl[1] !== "" ||
         decomposedUrl[2] !== "github.com"
     ) {
-        throw new Error("Bad URL has been entered!");
+        throw BAD_URL_ERR;
     }
 
     decomposedUrl = {
@@ -100,4 +103,8 @@ function clearStats () {
     for (let branch of branches) {
         branch.remove();
     }
+}
+
+function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
