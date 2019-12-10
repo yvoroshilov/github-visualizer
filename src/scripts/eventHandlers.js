@@ -28,6 +28,8 @@ function enterPressed (e) {
 
 async function fetchPressed () {
     BTN.removeEventListener("click", fetchPressed);
+    updateProgressBar("", 0, 0);
+
     let decomposedInput;
     try {
         decomposedInput = processUrl();
@@ -95,6 +97,7 @@ function processUrl () {
 }
 
 function clearStats () {
+    document.getElementsByClassName("hint")[0].style.visibility = "hidden";
     const cells = document.getElementById("stats").getElementsByTagName("span");
     for (let cell of cells) {
         cell.innerHTML = "";

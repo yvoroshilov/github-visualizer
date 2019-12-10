@@ -276,7 +276,7 @@ input, select {
     }
 }
 
-#hint {
+.hint {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -284,4 +284,18 @@ input, select {
 
     color: dimgrey;
     user-select: none;
+}
+
+#progressBarBorder {
+    width: 500px;
+    height: 15px;
+
+    border: 1px solid dimgrey;
+}
+
+#progressBar {
+    height: 100%;
+    background-color: dimgray;
+
+    transition: width 0.5s;
 }

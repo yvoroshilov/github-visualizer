@@ -155,6 +155,7 @@ async function setRepoStats (repoInfo) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
         }
+        await updateProgressBar("Branches", i + 1, branches.length);
     }
     setBranchStats(defaultBranch);
 }
@@ -320,6 +321,18 @@ function clearCollectedData () {
     usrAndRepo = {};
     allUniqueCommits = [];
     orderedCommits = [];
+}
+
+function updateProgressBar (elements, cur, max) {
+    let progressBox = document.getElementsByClassName("hint")[1];
+    let progressBar = document.getElementById("progressBar");
+    progressBox.style.visibility = "visible";
+
+    if (elements !== "") {
+        progressBox.childNodes[0].nodeValue = `${elements}: ${cur}/${max}`;
+        progressBar.style.width = `${cur / max * 100}%`;
+    }
+    if (cur === max) progressBox.style.visibility = "hidden";
 }
 
 /*

@@ -231,19 +231,6 @@ async function visualize () {
                         .style("left", (getPosX(i) * zoomScale + transformX) + "px")
                         .style("top", (getPosY(i) * zoomScale + transformY) + "px")
                         .style("margin", (zoomScale > 1 ? radius : radius * zoomScale) + "px");
-                /*
-                g.append("circle")
-                        .attr("class", "nodeBorder")
-                        .attr("cx", () => getPosX(i))
-                        .attr("cy", () => getPosY(i))
-                        .attr("r", radius)
-                        .attr("storke-width", "4")
-                        .attr("stroke", "red")
-                        .attr("fill", "transparent");
-                 */
-
-
-
             })
             .on("mouseout", function (d) {
                 tooltip.style("opacity", 0);
@@ -259,17 +246,6 @@ async function visualize () {
                 transformY = d3.event.transform.y;
             })
     );
-    /*
-    g.selectAll("text")
-            .data(allUniqueCommits)
-        .enter().append("text")
-            .attr("x", (d, i) => getPosX(i) - radius)
-            .attr("y", (d, i) => getPosY(i))
-            .text((d, i) => "(" + i + ")" + d.sha.slice(0, 8));
-
-     */
-
-
 
     function getPosX (index) {
         return initialPosX + index * distanceHorizontal;
@@ -568,10 +544,8 @@ function clearVisualData () {
     transformX = 0;
     transformY = 0;
 
-    let box = d3.select("#visualizingBox").selectAll("*").remove();
-    d3.select("#visualizingBox")
-        .append("div")
-            .attr("id", "visualizingField")
+    let box = d3.select("svg").remove();
+    d3.select("#visualizingField")
         .append("svg")
             .attr("height", "100%")
             .attr("width", "100%");
