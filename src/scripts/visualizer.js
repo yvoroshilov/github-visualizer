@@ -231,6 +231,19 @@ async function visualize () {
                         .style("left", (getPosX(i) * zoomScale + transformX) + "px")
                         .style("top", (getPosY(i) * zoomScale + transformY) + "px")
                         .style("margin", (zoomScale > 1 ? radius : radius * zoomScale) + "px");
+                /*
+                g.append("circle")
+                        .attr("class", "nodeBorder")
+                        .attr("cx", () => getPosX(i))
+                        .attr("cy", () => getPosY(i))
+                        .attr("r", radius)
+                        .attr("storke-width", "4")
+                        .attr("stroke", "red")
+                        .attr("fill", "transparent");
+                 */
+
+
+
             })
             .on("mouseout", function (d) {
                 tooltip.style("opacity", 0);
