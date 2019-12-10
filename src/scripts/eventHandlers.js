@@ -28,7 +28,7 @@ function enterPressed (e) {
 
 async function fetchPressed () {
     BTN.removeEventListener("click", fetchPressed);
-    updateProgressBar("", 0, 0);
+    updateProgress("", 0, 0);
 
     let decomposedInput;
     try {
@@ -106,8 +106,4 @@ function clearStats () {
     for (let branch of branches) {
         branch.remove();
     }
-}
-
-function sleep (ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -130,7 +130,6 @@ async function startFetching (decomposedInput) {
 
 async function setRepoStats (repoInfo) {
     const cells = document.getElementById("stats").getElementsByTagName("span");
-
     // Setting a reference to repo
     cells[0].appendChild(document.createElement("a"));
     cells[0].lastElementChild.setAttribute("href", repoInfo.html_url);
@@ -155,9 +154,10 @@ async function setRepoStats (repoInfo) {
             curElem.setAttribute("selected", "selected");
             defaultBranch = branches[i];
         }
-        await updateProgressBar("Branches", i + 1, branches.length);
+        await updateProgress("Branches", i + 1, branches.length);
     }
     setBranchStats(defaultBranch);
+    await updateProgress("", -1, -1);
 }
 
 async function setBranchStats (branch) {
@@ -186,7 +186,12 @@ async function setBranchStats (branch) {
 async function buildGraph () {
     // all commits for every branch
     let allCommits = [];
+    // for progressBar
+    let curTotalCommits, curBranchName;
     for (let i = 0; i < branches.length; i++) {
+        curTotalCommits = await getTotalCommitsNumber(new Paginator(branches[i].data));
+        curBranchName = branches[i].name;
+
         allCommits.push(await getAllCommits(new Paginator(branches[i].data)));
         for (let j = 0; j < allCommits[i].length; j++) {
             if (allUniqueCommits.find(x => x.sha === allCommits[i][j].sha) === undefined) {
@@ -258,15 +263,16 @@ async function buildGraph () {
     }
 
 
-
     async function getAllCommits (paginator) {
         let allCommits = [];
         let curPage = await paginator.items.clone().json();
         allCommits.push(...curPage);
+        await updateProgress(`Commits for ${curBranchName}`, allCommits.length, curTotalCommits);
         while (paginator.links.next !== "") {
             await paginator.next();
             curPage = await paginator.items.clone().json();
             allCommits.push(...curPage);
+            await updateProgress(`Commits for ${curBranchName}`, allCommits.length, curTotalCommits);
         }
         return allCommits;
     }
@@ -312,6 +318,7 @@ async function buildGraph () {
         return found;
     }
     console.log(orderedCommits);
+    await updateProgress("", -1, -1);
 }
 
 function clearCollectedData () {
@@ -323,16 +330,51 @@ function clearCollectedData () {
     orderedCommits = [];
 }
 
-function updateProgressBar (elements, cur, max) {
+async function updateProgress (elements, cur, max) {
+    const dotsCount = 3;
     let progressBox = document.getElementsByClassName("hint")[1];
     let progressBar = document.getElementById("progressBar");
+    let progressBarBorder = document.getElementById("progressBarBorder");
     progressBox.style.visibility = "visible";
 
-    if (elements !== "") {
+    if (elements !== "" && cur !== max) {
+        if (progressBox.childNodes[1].tagName === "SPAN") {
+            for (let i = 0; i < dotsCount; i++) progressBox.childNodes[1].remove();
+        }
+        progressBar.style.visibility = "visible";
+        progressBarBorder.style.visibility = "visible";
+        updateCounter();
+    } else {
+        if (cur === max) {
+            progressBar.style.visibility = "hidden";
+            progressBarBorder.style.visibility = "hidden";
+            // remove placeholder
+            if (cur === -1 && max === -1) {
+                progressBox.style.visibility = "hidden";
+                return;
+            }
+        }
+        setPlaceholder();
+    }
+
+
+    function updateCounter () {
         progressBox.childNodes[0].nodeValue = `${elements}: ${cur}/${max}`;
         progressBar.style.width = `${cur / max * 100}%`;
     }
-    if (cur === max) progressBox.style.visibility = "hidden";
+
+    function setPlaceholder () {
+        progressBox.childNodes[0].nodeValue = "Processing";
+
+        let firstBr = progressBox.getElementsByTagName("br")[0];
+        for (let i = 0; i < dotsCount; i++) {
+            let dot = document.createElement("span");
+            dot.innerText = ".";
+            dot.className = "processingDot";
+            progressBox.insertBefore(dot, firstBr);
+
+        }
+    }
 }
 
 /*
@@ -365,4 +407,8 @@ function deepCopy (aObject) {
     }
 
     return bObject;
+}
+
+function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
