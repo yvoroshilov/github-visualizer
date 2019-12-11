@@ -288,6 +288,7 @@ async function visualize () {
         return level === 0 && !nul ? colors[1] : colors[level];
     }
     BTN.removeEventListener("click", visualize);
+    BTN.innerText = "Done!";
 }
 
 // start and end - arrays [x, y]

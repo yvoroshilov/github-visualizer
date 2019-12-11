@@ -136,7 +136,7 @@ async function setRepoStats (repoInfo) {
     cells[0].lastElementChild.appendChild(document.createTextNode(repoInfo.html_url.replace("https://", "")));
 
     // Repository creating date
-    cells[2].appendChild(document.createTextNode(repoInfo.created_at));
+    cells[2].appendChild(document.createTextNode(repoInfo.created_at.replace("Z", " ").replace("T", " ")));
 
     // Getting all info about branches
     const branchesUrl = REPO_URL_TEMPLATE.replace("*", repoInfo.full_name) + "/branches?per_page=100";
@@ -179,7 +179,7 @@ async function setBranchStats (branch) {
     // Last commit info
     cells[3].appendChild(document.createTextNode(
         latestCommit.sha.slice(0, 7) + " | " +
-        latestCommit.commit.committer.date
+        latestCommit.commit.committer.date.replace("Z", " ").replace("T", " ")
     ));
 }
 

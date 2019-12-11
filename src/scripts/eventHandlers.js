@@ -28,14 +28,6 @@ function enterPressed (e) {
 
 async function fetchPressed () {
     BTN.removeEventListener("click", fetchPressed);
-    await updateProgress("", -1, -1);
-    BTN.innerHTML = "" +
-        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
-        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
-        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
-    "";
-
-
 
     let decomposedInput;
     try {
@@ -48,8 +40,16 @@ async function fetchPressed () {
         void WARNING_TOOLTIP.offsetWidth;
         WARNING_TOOLTIP.classList.add("animate");
         BTN.addEventListener("click", fetchPressed);
+
         return
     }
+    await updateProgress("", -1, -1);
+    BTN.innerHTML = "" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "<span class=\"processingDot\" style=\"text-decoration: none\">.</span>" +
+        "";
+
     clearAll();
     clearCollectedData();
 
@@ -80,7 +80,7 @@ function processUrl () {
     try {
         if (repoUrl[repoUrl.length-1] === '/') repoUrl = repoUrl.substr(0, repoUrl.length-1);
         if (repoUrl.substr(0, 8) !== "https://") repoUrl = "https://" + repoUrl;
-    } catch {
+    } catch (e) {
         throw BAD_URL_ERR;
     }
 
