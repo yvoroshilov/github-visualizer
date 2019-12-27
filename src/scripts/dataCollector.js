@@ -236,6 +236,10 @@ async function buildGraph () {
 
                     }
                 }
+                if (curCommit.parents.length === 0) {
+                    curParent = undefined;
+                    break;
+                }
                 if (curParent === undefined) break;
                 if (graphSearch(orderedCommits, curParent)) break;
                 curCommit = curParent;
